@@ -34,6 +34,10 @@ import {
   isTenantRecord,
 } from "@/lib/case-manager-dashboard";
 import {
+  ApplicantStatusFilter,
+  DEFAULT_APPLICANT_STATUS_SELECTION,
+} from "@/components/ApplicantStatusFilter";
+import {
   formatDate,
   formatCurrency,
   formatInReviewBy,
@@ -91,6 +95,13 @@ export function ApplicantTable({
   const { user } = useUser();
   const [cityFilter, setCityFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusSelection, setStatusSelection] = useState<Set<Applicant["status"]>>(
+    () => new Set(DEFAULT_APPLICANT_STATUS_SELECTION)
+  );
+  const [soloStatusFilter, setSoloStatusFilter] = useState<Applicant["status"] | null>(
+    null
+  );
+  const [statusMultiselect, setStatusMultiselect] = useState(true);
   const [metroFilter, setMetroFilter] = useState<string>("all");
   const [petsFilter, setPetsFilter] = useState<string>("all");
   const [accessibilityFilter, setAccessibilityFilter] = useState(false);
@@ -123,6 +134,9 @@ export function ApplicantTable({
     applicants.forEach((a) => a.preferredCities.forEach((c) => cities.add(c)));
     return Array.from(cities).sort();
   }, [applicants]);
+
+  const useStatusPills =
+    !casesMode && !tenantsOnly && !inReviewOnly;
 
   const allMetros = useMemo(() => {
     const metros = new Set<string>();
@@ -161,7 +175,13 @@ export function ApplicantTable({
       );
     }
 
-    if (statusFilter !== "all") {
+    if (useStatusPills) {
+      if (soloStatusFilter) {
+        list = list.filter((a) => a.status === soloStatusFilter);
+      } else {
+        list = list.filter((a) => statusSelection.has(a.status));
+      }
+    } else if (statusFilter !== "all") {
       list = list.filter((a) => a.status === statusFilter);
     }
 
@@ -202,6 +222,9 @@ export function ApplicantTable({
     user.id,
     cityFilter,
     statusFilter,
+    useStatusPills,
+    statusSelection,
+    soloStatusFilter,
     metroFilter,
     petsFilter,
     accessibilityFilter,
@@ -394,27 +417,38 @@ export function ApplicantTable({
             </Select>
           </div>
         )}
-        <div className="space-y-1">
-          <Label>Status</Label>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="All statuses" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              {(casesMode === "completed" || tenantsOnly
-                ? COMPLETED_STATUSES
-                : casesMode === "in-progress"
-                  ? IN_PROGRESS_STATUSES
-                  : APPLICANT_STATUS_OPTIONS
-              ).map((s) => (
-                <SelectItem key={s} value={s}>
-                  {formatStatus(s)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {useStatusPills ? (
+          <ApplicantStatusFilter
+            selected={statusSelection}
+            soloStatus={soloStatusFilter}
+            multiselect={statusMultiselect}
+            onSelectedChange={setStatusSelection}
+            onSoloStatusChange={setSoloStatusFilter}
+            onMultiselectChange={setStatusMultiselect}
+          />
+        ) : (
+          <div className="space-y-1">
+            <Label>Status</Label>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[160px]">
+                <SelectValue placeholder="All statuses" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                {(casesMode === "completed" || tenantsOnly
+                  ? COMPLETED_STATUSES
+                  : casesMode === "in-progress"
+                    ? IN_PROGRESS_STATUSES
+                    : APPLICANT_STATUS_OPTIONS
+                ).map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {formatStatus(s)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div className="space-y-1">
           <Label>Metro Area</Label>
           <Select value={metroFilter} onValueChange={setMetroFilter}>

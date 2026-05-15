@@ -1,3 +1,12 @@
+export interface Property {
+  id: string;
+  name: string;
+  address: string;
+  city: string;
+  metroArea: string;
+  totalUnits: number;
+}
+
 export interface Vacancy {
   id: string;
   propertyId: string;
@@ -41,6 +50,10 @@ export interface Applicant {
     | "Rejected";
   responseStatus: "NoResponse" | "Contacted" | "Scheduled" | "Declined";
   assignedVacancyId?: string;
+  inReviewBy?: {
+    name: string;
+    title: string;
+  };
   notes: Array<{
     id: string;
     date: string;

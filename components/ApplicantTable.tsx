@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, Fragment } from "react";
+import { MoreVertical } from "lucide-react";
 import {
   flexRender,
   getCoreRowModel,
@@ -21,9 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { StatusFlowButtons } from "@/components/StatusFlowButtons";
+import { ApplicantDetailExpand } from "@/components/ApplicantDetailExpand";
+import { useUser } from "@/context/UserContext";
 import { getMatchingVacancies } from "@/lib/matching";
-import { formatDate, formatCurrency, formatStatus } from "@/lib/utils";
+import {
+  formatDate,
+  formatCurrency,
+  formatInReviewBy,
+  formatStatus,
+} from "@/lib/utils";
 import type { Applicant, Vacancy } from "@/types";
 
 const columnHelper = createColumnHelper<Applicant>();
@@ -42,12 +49,14 @@ interface ApplicantTableProps {
 }
 
 export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
+  const { user } = useUser();
   const [cityFilter, setCityFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [metroFilter, setMetroFilter] = useState<string>("all");
   const [petsFilter, setPetsFilter] = useState<string>("all");
   const [accessibilityFilter, setAccessibilityFilter] = useState(false);
   const [cityInput, setCityInput] = useState("");
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const { data: applicants = [], isLoading } = useQuery<Applicant[]>({
     queryKey: ["applicants"],
@@ -90,8 +99,8 @@ export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
 
     list.sort(
       (a, b) =>
-        new Date(b.applicationDate).getTime() -
-        new Date(a.applicationDate).getTime()
+        new Date(a.applicationDate).getTime() -
+        new Date(b.applicationDate).getTime()
     );
 
     if (cityFilter.length > 0) {
@@ -149,6 +158,14 @@ export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
     }
   };
 
+  const getReviewLabel = (applicant: Applicant) => {
+    const reviewer = applicant.inReviewBy ?? {
+      name: user.reviewerName,
+      title: user.reviewerTitle,
+    };
+    return formatInReviewBy(reviewer.name, reviewer.title);
+  };
+
   const columns = useMemo(
     () => [
       columnHelper.accessor("applicationDate", {
@@ -166,6 +183,19 @@ export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
           </Link>
         ),
       }),
+      ...(tenantsOnly
+        ? [
+            columnHelper.display({
+              id: "review",
+              header: "Review",
+              cell: ({ row }) => (
+                <span className="text-sm text-slate-600">
+                  {getReviewLabel(row.original)}
+                </span>
+              ),
+            }),
+          ]
+        : []),
       columnHelper.accessor("preferredCities", {
         header: "Cities",
         cell: (info) => info.getValue().join(", "),
@@ -202,18 +232,29 @@ export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
         },
       }),
       columnHelper.display({
-        id: "actions",
-        header: "Actions",
+        id: "expand",
+        header: "",
         cell: ({ row }) => {
-          const matches = getMatchingVacancies(row.original, vacancies);
-          const vacancyId = matches[0]?.id ?? row.original.assignedVacancyId;
+          const isExpanded = expandedId === row.original.id;
           return (
-            <StatusFlowButtons applicant={row.original} vacancyId={vacancyId} />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              aria-label={isExpanded ? "Collapse details" : "Expand details"}
+              aria-expanded={isExpanded}
+              onClick={() =>
+                setExpandedId(isExpanded ? null : row.original.id)
+              }
+            >
+              <MoreVertical className="h-4 w-4" />
+            </Button>
           );
         },
       }),
     ],
-    [vacancies]
+    [vacancies, expandedId, tenantsOnly, user]
   );
 
   const table = useReactTable({
@@ -372,13 +413,28 @@ export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
                 </tr>
               ) : (
                 table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="border-t border-slate-100 hover:bg-slate-50">
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-4 py-3">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
+                  <Fragment key={row.id}>
+                    <tr className="border-t border-slate-100 hover:bg-slate-50">
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="px-4 py-3">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                    {expandedId === row.original.id && (
+                      <tr className="border-t border-slate-100">
+                        <td colSpan={columns.length} className="p-0">
+                          <ApplicantDetailExpand
+                            applicant={row.original}
+                            vacancies={vacancies}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 ))
               )}
             </tbody>
@@ -387,7 +443,7 @@ export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
       )}
       <p className="text-sm text-slate-500">
         Showing {filtered.length} of {applicants.length} · sorted by application date
-        (newest first)
+        (oldest first)
       </p>
     </div>
   );

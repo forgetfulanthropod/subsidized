@@ -3,11 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { UserLogin } from "@/components/UserLogin";
 
 const links = [
+  { href: "/vacancies", label: "Vacancies" },
   { href: "/applicants", label: "Applicants" },
   { href: "/tenants", label: "Tenants" },
-  { href: "/vacancies", label: "Vacancies" },
 ];
 
 export function Nav() {
@@ -15,14 +16,14 @@ export function Nav() {
 
   return (
     <header className="border-b border-slate-200 bg-white">
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+        <Link href="/vacancies" className="flex shrink-0 items-center gap-2">
           <span className="text-xl font-bold text-emerald-800">Essex Haven</span>
           <span className="hidden text-sm text-slate-500 sm:inline">
             Subsidized Housing
           </span>
         </Link>
-        <nav className="flex gap-1">
+        <nav className="flex flex-1 justify-center gap-1">
           {links.map((link) => (
             <Link
               key={link.href}
@@ -38,6 +39,7 @@ export function Nav() {
             </Link>
           ))}
         </nav>
+        <UserLogin />
       </div>
     </header>
   );

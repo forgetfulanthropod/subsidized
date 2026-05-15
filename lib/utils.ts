@@ -28,3 +28,7 @@ export function formatStatus(status: string) {
     .trim()
     .toLowerCase();
 }
+
+export function formatInReviewBy(name: string, title: string) {
+  return `In review by ${name}, ${title}`;
+}

@@ -1,7 +1,7 @@
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { v4 as uuid } from "uuid";
-import type { Applicant, CityInfo, Vacancy } from "../types";
+import type { Applicant, CityInfo, Property, Vacancy } from "../types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -46,6 +46,89 @@ const cities: CityInfo[] = [
     amenities: ["UC campus area", "Gourmet Ghetto", "Parks"],
     schools: "Berkeley Unified — top-rated district",
     transit: "BART Downtown Berkeley, AC Transit",
+  },
+];
+
+const properties: Property[] = [
+  {
+    id: "prop-la-101",
+    name: "Wilshire Gardens",
+    address: "1245 Wilshire Blvd",
+    city: "Los Angeles",
+    metroArea: "Los Angeles Metro",
+    totalUnits: 86,
+  },
+  {
+    id: "prop-la-102",
+    name: "Sunset Terrace",
+    address: "892 Sunset Blvd",
+    city: "Los Angeles",
+    metroArea: "Los Angeles Metro",
+    totalUnits: 64,
+  },
+  {
+    id: "prop-pas-201",
+    name: "Colorado Court",
+    address: "456 Colorado Blvd",
+    city: "Pasadena",
+    metroArea: "Los Angeles Metro",
+    totalUnits: 52,
+  },
+  {
+    id: "prop-oak-301",
+    name: "Broadway Commons",
+    address: "2100 Broadway",
+    city: "Oakland",
+    metroArea: "Bay Area",
+    totalUnits: 72,
+  },
+  {
+    id: "prop-oak-302",
+    name: "Telegraph Place",
+    address: "789 Telegraph Ave",
+    city: "Oakland",
+    metroArea: "Bay Area",
+    totalUnits: 48,
+  },
+  {
+    id: "prop-sj-401",
+    name: "Alameda Heights",
+    address: "1500 The Alameda",
+    city: "San Jose",
+    metroArea: "Bay Area",
+    totalUnits: 96,
+  },
+  {
+    id: "prop-ber-501",
+    name: "Shattuck Residences",
+    address: "2200 Shattuck Ave",
+    city: "Berkeley",
+    metroArea: "Bay Area",
+    totalUnits: 40,
+  },
+  {
+    id: "prop-la-103",
+    name: "Pico Park",
+    address: "3300 Pico Blvd",
+    city: "Los Angeles",
+    metroArea: "Los Angeles Metro",
+    totalUnits: 58,
+  },
+  {
+    id: "prop-pas-202",
+    name: "Lake Avenue Homes",
+    address: "100 S Lake Ave",
+    city: "Pasadena",
+    metroArea: "Los Angeles Metro",
+    totalUnits: 44,
+  },
+  {
+    id: "prop-sj-402",
+    name: "Santa Clara Square",
+    address: "500 E Santa Clara St",
+    city: "San Jose",
+    metroArea: "Bay Area",
+    totalUnits: 80,
   },
 ];
 
@@ -294,6 +377,12 @@ function generateApplicants(): Applicant[] {
 
     const hasPets = i % 4 === 0;
     const status = statuses[i % statuses.length];
+    const inReviewBy =
+      status === "TenancyConfirmed"
+        ? i % 3 === 0
+          ? { name: "F. Smith", title: "supervisor" }
+          : { name: "A. Rodriguez", title: "case manager" }
+        : undefined;
 
     applicants.push({
       id: uuid(),
@@ -309,6 +398,7 @@ function generateApplicants(): Applicant[] {
       petTypes: hasPets ? (i % 2 === 0 ? ["cat"] : ["dog"]) : undefined,
       preferredCities,
       status,
+      inReviewBy,
       responseStatus:
         status === "Notified"
           ? "NoResponse"
@@ -337,8 +427,8 @@ function generateApplicants(): Applicant[] {
 
   return applicants.sort(
     (a, b) =>
-      new Date(b.applicationDate).getTime() -
-      new Date(a.applicationDate).getTime()
+      new Date(a.applicationDate).getTime() -
+      new Date(b.applicationDate).getTime()
   );
 }
 
@@ -359,6 +449,10 @@ async function seed() {
     JSON.stringify(cities, null, 2)
   );
   await writeFile(
+    path.join(DATA_DIR, "properties.json"),
+    JSON.stringify(properties, null, 2)
+  );
+  await writeFile(
     path.join(DATA_DIR, "audit-log.json"),
     JSON.stringify([], null, 2)
   );
@@ -368,7 +462,7 @@ async function seed() {
   );
 
   console.log(
-    `Seeded ${vacancies.length} vacancies, ${applicants.length} applicants, ${cities.length} cities`
+    `Seeded ${properties.length} properties, ${vacancies.length} vacancies, ${applicants.length} applicants, ${cities.length} cities`
   );
 }
 

@@ -5,6 +5,7 @@ import type {
   AuditLogEntry,
   CityInfo,
   NotificationLogEntry,
+  Property,
   Vacancy,
 } from "@/types";
 
@@ -38,8 +39,8 @@ export async function getApplicants() {
   const applicants = await readJson<Applicant[]>("applicants.json");
   return applicants.sort(
     (a, b) =>
-      new Date(b.applicationDate).getTime() -
-      new Date(a.applicationDate).getTime()
+      new Date(a.applicationDate).getTime() -
+      new Date(b.applicationDate).getTime()
   );
 }
 
@@ -54,6 +55,10 @@ export async function getApplicantById(id: string) {
 
 export async function getCities() {
   return readJson<CityInfo[]>("cities.json");
+}
+
+export async function getProperties() {
+  return readJson<Property[]>("properties.json");
 }
 
 export async function getAuditLog() {

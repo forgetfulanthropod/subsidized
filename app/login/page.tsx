@@ -27,10 +27,6 @@ export default function LoginPage() {
             <Building2 className="h-8 w-8 text-emerald-700" aria-hidden />
           </div>
         </div>
-
-        <h1 className="text-xl font-semibold text-slate-900">
-          Sign in to Essex
-        </h1>
         <p className="mt-2 text-sm text-slate-600">
           Use your Essex account to access property management applications.
         </p>

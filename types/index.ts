@@ -76,6 +76,7 @@ export interface Applicant {
     name: string;
     title: string;
   };
+  reviewedAt?: string;
   assignedCaseManagerId?: CaseManagerId;
   escalatedAt?: string;
   escalatedBy?: CaseManagerId;

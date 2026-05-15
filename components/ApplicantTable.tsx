@@ -29,6 +29,11 @@ import { useUser } from "@/context/UserContext";
 import { isCaseManager } from "@/lib/users";
 import { getMatchingVacancies } from "@/lib/matching";
 import {
+  isApplicantRecord,
+  isInReview,
+  isTenantRecord,
+} from "@/lib/case-manager-dashboard";
+import {
   formatDate,
   formatCurrency,
   formatInReviewBy,
@@ -62,12 +67,16 @@ const COMPLETED_STATUSES: Applicant["status"][] = [
   "Rejected",
 ];
 
+type RecordTypeFilter = "all" | "applicants" | "tenants";
+
 interface ApplicantTableProps {
   tenantsOnly?: boolean;
   casesMode?: "in-progress" | "completed";
   managerCaseloadOnly?: boolean;
   showReview?: boolean;
   showAssignee?: boolean;
+  showRecordTypeFilter?: boolean;
+  inReviewOnly?: boolean;
 }
 
 export function ApplicantTable({
@@ -76,6 +85,8 @@ export function ApplicantTable({
   managerCaseloadOnly = false,
   showReview = false,
   showAssignee = false,
+  showRecordTypeFilter = false,
+  inReviewOnly = false,
 }: ApplicantTableProps) {
   const { user } = useUser();
   const [cityFilter, setCityFilter] = useState<string[]>([]);
@@ -83,6 +94,9 @@ export function ApplicantTable({
   const [metroFilter, setMetroFilter] = useState<string>("all");
   const [petsFilter, setPetsFilter] = useState<string>("all");
   const [accessibilityFilter, setAccessibilityFilter] = useState(false);
+  const [recordTypeFilter, setRecordTypeFilter] = useState<RecordTypeFilter>(
+    tenantsOnly ? "tenants" : "applicants"
+  );
   const [cityInput, setCityInput] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -167,6 +181,18 @@ export function ApplicantTable({
       list = list.filter((a) => a.accessibilityNeeds.length > 0);
     }
 
+    if (showRecordTypeFilter || inReviewOnly) {
+      if (recordTypeFilter === "applicants") {
+        list = list.filter(isApplicantRecord);
+      } else if (recordTypeFilter === "tenants") {
+        list = list.filter(isTenantRecord);
+      }
+    }
+
+    if (inReviewOnly) {
+      list = list.filter(isInReview);
+    }
+
     return list;
   }, [
     applicants,
@@ -179,6 +205,9 @@ export function ApplicantTable({
     metroFilter,
     petsFilter,
     accessibilityFilter,
+    recordTypeFilter,
+    showRecordTypeFilter,
+    inReviewOnly,
     vacancies,
   ]);
 
@@ -347,6 +376,24 @@ export function ApplicantTable({
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        {showRecordTypeFilter && (
+          <div className="space-y-1">
+            <Label>Record</Label>
+            <Select
+              value={recordTypeFilter}
+              onValueChange={(v) => setRecordTypeFilter(v as RecordTypeFilter)}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All</SelectItem>
+                <SelectItem value="applicants">Applicants</SelectItem>
+                <SelectItem value="tenants">Tenants</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
         <div className="space-y-1">
           <Label>Status</Label>
           <Select value={statusFilter} onValueChange={setStatusFilter}>

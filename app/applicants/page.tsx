@@ -18,7 +18,7 @@ export default function ApplicantsPage() {
           <Link href="/tenants">View Tenants →</Link>
         </Button>
       </div>
-      <ApplicantTable showAssignee />
+      <ApplicantTable showAssignee showRecordTypeFilter />
     </main>
   );
 }

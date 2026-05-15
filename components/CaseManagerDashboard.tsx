@@ -6,12 +6,15 @@ import {
   CalendarDays,
   Clock,
   Mail,
-  Users,
 } from "lucide-react";
+import { InReviewQueue } from "@/components/InReviewQueue";
 import { useUser } from "@/context/UserContext";
-import { getCaseManagerDashboard } from "@/lib/case-manager-dashboard";
+import {
+  getCaseManagerDashboard,
+  MOVE_INS_SCROLL_THRESHOLD,
+} from "@/lib/case-manager-dashboard";
 import { isCaseManager } from "@/lib/users";
-import { formatDate, formatDaysSince, formatStatus } from "@/lib/utils";
+import { formatDate, formatDaysSince } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import type { Applicant } from "@/types";
@@ -50,30 +53,9 @@ export function CaseManagerDashboard() {
         </p>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <DashboardCard
-          title="Your tenants in review"
-          icon={Users}
-          count={dashboard.tenantsInReview.length}
-          empty="No tenants currently in your review queue."
-        >
-          {dashboard.tenantsInReview.slice(0, 5).map((a) => (
-            <ApplicantRow
-              key={a.id}
-              name={a.fullName}
-              href={`/applications/${a.id}`}
-              meta={
-                a.inReviewBy
-                  ? `In review · ${formatStatus(a.status)}`
-                  : formatStatus(a.status)
-              }
-            />
-          ))}
-          {dashboard.tenantsInReview.length > 5 && (
-            <FooterLink href="/cases/completed" label="View completed cases" />
-          )}
-        </DashboardCard>
+      <InReviewQueue items={dashboard.tenantsInReview} />
 
+      <div className="grid gap-4 sm:grid-cols-3">
         <DashboardCard
           title="Longest since interaction"
           icon={Clock}
@@ -117,16 +99,24 @@ export function CaseManagerDashboard() {
           count={dashboard.moveInsThisWeek.length}
           empty="No move-ins scheduled this week."
         >
-          {dashboard.moveInsThisWeek.map((a) => (
-            <ApplicantRow
-              key={a.id}
-              name={a.fullName}
-              href={`/applications/${a.id}`}
-              meta={
-                a.moveInDate ? `Move-in ${formatDate(a.moveInDate)}` : "—"
-              }
-            />
-          ))}
+          <div
+            className={
+              dashboard.moveInsThisWeek.length > MOVE_INS_SCROLL_THRESHOLD
+                ? "max-h-52 space-y-2 overflow-y-auto pr-1"
+                : "space-y-2"
+            }
+          >
+            {dashboard.moveInsThisWeek.map((a) => (
+              <ApplicantRow
+                key={a.id}
+                name={a.fullName}
+                href={`/applications/${a.id}`}
+                meta={
+                  a.moveInDate ? `Move-in ${formatDate(a.moveInDate)}` : "—"
+                }
+              />
+            ))}
+          </div>
         </DashboardCard>
       </div>
     </section>
@@ -194,17 +184,6 @@ function ApplicantRow({
       >
         {meta}
       </p>
-    </Link>
-  );
-}
-
-function FooterLink({ href, label }: { href: string; label: string }) {
-  return (
-    <Link
-      href={href}
-      className="block pt-1 text-xs font-medium text-emerald-700 hover:underline"
-    >
-      {label} →
     </Link>
   );
 }

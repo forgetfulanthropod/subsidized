@@ -1,6 +1,7 @@
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { v4 as uuid } from "uuid";
+import { isInReview } from "../lib/case-manager-dashboard";
 import {
   getRequiredDocuments,
   pickStallReason,
@@ -575,8 +576,55 @@ function generateApplicants(vacancies: Vacancy[]): Applicant[] {
   );
 
   ensureMoveInsThisWeek(all, vacancies);
+  capMoveInsThisWeek(all);
   markEscalatedCases(all);
+  capInReviewPerManager(all);
   return all;
+}
+
+const MOVE_INS_THIS_WEEK_CAP = 11;
+
+function capMoveInsThisWeek(applicants: Applicant[]) {
+  for (const cmId of CASE_MANAGERS) {
+    const thisWeek = applicants
+      .filter(
+        (a) =>
+          a.assignedCaseManagerId === cmId &&
+          a.moveInDate &&
+          isThisWeek(a.moveInDate)
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.moveInDate!).getTime() - new Date(b.moveInDate!).getTime()
+      );
+
+    thisWeek.slice(MOVE_INS_THIS_WEEK_CAP).forEach((a, i) => {
+      a.moveInDate = dateDaysFromNow(8 + (i % 14));
+    });
+  }
+}
+
+const IN_REVIEW_CAP = 35;
+
+function capInReviewPerManager(applicants: Applicant[]) {
+  for (const cmId of CASE_MANAGERS) {
+    const queue = applicants
+      .filter(
+        (a) =>
+          a.assignedCaseManagerId === cmId &&
+          isInReview(a)
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.applicationDate).getTime() -
+          new Date(b.applicationDate).getTime()
+      );
+
+    queue.slice(IN_REVIEW_CAP).forEach((a, i) => {
+      a.reviewedAt = randomDate(1 + (i % 30));
+      delete a.inReviewBy;
+    });
+  }
 }
 
 function markEscalatedCases(applicants: Applicant[]) {

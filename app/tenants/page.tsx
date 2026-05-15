@@ -18,7 +18,7 @@ export default function TenantsPage() {
           <Link href="/applicants">← All Applicants</Link>
         </Button>
       </div>
-      <ApplicantTable tenantsOnly />
+      <ApplicantTable tenantsOnly showRecordTypeFilter />
     </main>
   );
 }

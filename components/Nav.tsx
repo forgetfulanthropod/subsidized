@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -18,8 +19,18 @@ export function Nav() {
   return (
     <header className="border-b border-slate-200 bg-white">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/cases/in-progress" className="flex shrink-0 items-center gap-2">
-          <span className="text-xl font-bold text-emerald-800">Essex Haven</span>
+        <Link
+          href="/cases/in-progress"
+          className="flex shrink-0 items-center gap-2.5"
+        >
+          <Image
+            src="/essex-logo.png"
+            alt="Essex Property Trust"
+            width={180}
+            height={48}
+            className="h-8 w-auto sm:h-9"
+            priority
+          />
           <span className="hidden text-sm text-slate-500 sm:inline">
             Subsidized Housing
           </span>

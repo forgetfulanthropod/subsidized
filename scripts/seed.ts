@@ -1,7 +1,14 @@
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { v4 as uuid } from "uuid";
-import type { Applicant, CityInfo, Property, Vacancy } from "../types";
+import type {
+  Applicant,
+  ApplicantMessage,
+  CaseManagerId,
+  CityInfo,
+  Property,
+  Vacancy,
+} from "../types";
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
@@ -355,6 +362,57 @@ function randomDate(daysAgo: number) {
   return d.toISOString();
 }
 
+function dateDaysFromNow(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  d.setHours(12, 0, 0, 0);
+  return d.toISOString();
+}
+
+const CASE_MANAGERS: CaseManagerId[] = [
+  "case-manager-1",
+  "case-manager-2",
+  "case-manager-3",
+];
+
+const MESSAGE_SUBJECTS = [
+  "Documentation follow-up",
+  "Lease signing question",
+  "Income verification",
+  "Unit walkthrough request",
+  "Voucher update",
+];
+
+function buildMessages(
+  fullName: string,
+  i: number
+): ApplicantMessage[] | undefined {
+  if (i % 4 !== 0) return undefined;
+  const unread = i % 8 === 0;
+  return [
+    {
+      id: uuid(),
+      date: randomDate(4),
+      from: fullName,
+      subject: MESSAGE_SUBJECTS[i % MESSAGE_SUBJECTS.length],
+      preview: "Hi, I wanted to follow up on my application status…",
+      read: !unread,
+    },
+    ...(i % 12 === 0
+      ? [
+          {
+            id: uuid(),
+            date: randomDate(1),
+            from: fullName,
+            subject: "Urgent: move-in date",
+            preview: "Can we confirm the move-in window for this week?",
+            read: false,
+          },
+        ]
+      : []),
+  ];
+}
+
 function generateApplicants(): Applicant[] {
   const cityPool = cities.map((c) => c.city);
   const applicants: Applicant[] = [];
@@ -382,12 +440,28 @@ function generateApplicants(): Applicant[] {
         ? i % 3 === 0
           ? { name: "F. Smith", title: "supervisor" }
           : { name: "A. Rodriguez", title: "case manager" }
+        : ["Eligible", "Notified", "MoveInScheduled"].includes(status)
+          ? { name: "A. Rodriguez", title: "case manager" }
+          : undefined;
+
+    const assignedCaseManagerId = CASE_MANAGERS[i % 3];
+    const fullName = `${first} ${last}`;
+    const interactionDaysAgo = 3 + ((i * 7) % 40);
+    const moveInDate =
+      status === "MoveInScheduled" || status === "TenancyConfirmed"
+        ? i % 5 === 0
+          ? dateDaysFromNow(i % 4)
+          : dateDaysFromNow(10 + (i % 14))
         : undefined;
 
     applicants.push({
       id: uuid(),
       applicationDate: randomDate(90),
-      fullName: `${first} ${last}`,
+      fullName,
+      assignedCaseManagerId,
+      lastInteractionDate: randomDate(interactionDaysAgo),
+      moveInDate,
+      messages: buildMessages(fullName, i),
       email: `${first.toLowerCase()}.${last.toLowerCase()}@email.com`,
       phone: `(${310 + (i % 90)}) 555-${String(1000 + i).slice(-4)}`,
       householdSize: 1 + (i % 5),

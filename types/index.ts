@@ -27,6 +27,20 @@ export interface Vacancy {
   images?: string[];
 }
 
+export type CaseManagerId =
+  | "case-manager-1"
+  | "case-manager-2"
+  | "case-manager-3";
+
+export interface ApplicantMessage {
+  id: string;
+  date: string;
+  from: string;
+  subject: string;
+  preview: string;
+  read: boolean;
+}
+
 export interface Applicant {
   id: string;
   applicationDate: string;
@@ -54,6 +68,10 @@ export interface Applicant {
     name: string;
     title: string;
   };
+  assignedCaseManagerId?: CaseManagerId;
+  lastInteractionDate?: string;
+  moveInDate?: string;
+  messages?: ApplicantMessage[];
   notes: Array<{
     id: string;
     date: string;

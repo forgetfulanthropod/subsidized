@@ -1,3 +1,4 @@
+import { CaseManagerDashboard } from "@/components/CaseManagerDashboard";
 import { VacancyGrid } from "@/components/VacancyGrid";
 
 export default function VacanciesPage() {
@@ -9,6 +10,7 @@ export default function VacanciesPage() {
           Vacant units and portfolio availability across your properties
         </p>
       </div>
+      <CaseManagerDashboard />
       <VacancyGrid />
     </main>
   );

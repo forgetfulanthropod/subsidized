@@ -39,3 +39,7 @@ export function getUserById(id: UserRole) {
 }
 
 export const STORAGE_KEY = "essex-haven-user";
+
+export function isCaseManager(id: UserRole) {
+  return id.startsWith("case-manager");
+}

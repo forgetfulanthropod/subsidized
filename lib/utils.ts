@@ -36,6 +36,27 @@ export function formatStatus(status: string) {
     .toLowerCase();
 }
 
+export function statusBadgeVariant(
+  status: string
+): "default" | "secondary" | "outline" | "warning" | "destructive" {
+  switch (status) {
+    case "Eligible":
+    case "TenancyConfirmed":
+    case "MovedIn":
+      return "default";
+    case "Stalled":
+    case "Pending":
+    case "Notified":
+    case "MoveInScheduled":
+      return "warning";
+    case "Ineligible":
+    case "Rejected":
+      return "destructive";
+    default:
+      return "secondary";
+  }
+}
+
 export function formatSubsidyType(subsidyType: "Section8" | "LIHTC") {
   return subsidyType === "Section8" ? "Section 8" : "Subsidized";
 }

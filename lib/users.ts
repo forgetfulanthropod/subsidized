@@ -14,6 +14,10 @@ export interface AppUser {
   avatarUrl: string;
 }
 
+function avatar(seed: string, background: string) {
+  return `https://api.dicebear.com/9.x/shapes/svg?seed=${encodeURIComponent(seed)}&backgroundColor=${background}`;
+}
+
 export const APP_USERS: AppUser[] = [
   {
     id: "case-manager-1",
@@ -21,8 +25,7 @@ export const APP_USERS: AppUser[] = [
     subtitle: "case manager",
     reviewerName: "A. Rodriguez",
     reviewerTitle: "case manager",
-    avatarUrl:
-      "https://api.dicebear.com/9.x/fun-emoji/svg?seed=rodriguez-fox&backgroundColor=d1fae5",
+    avatarUrl: avatar("a-rodriguez", "e2e8f0"),
   },
   {
     id: "case-manager-2",
@@ -30,8 +33,7 @@ export const APP_USERS: AppUser[] = [
     subtitle: "case manager",
     reviewerName: "M. Chen",
     reviewerTitle: "case manager",
-    avatarUrl:
-      "https://api.dicebear.com/9.x/fun-emoji/svg?seed=chen-panda&backgroundColor=e0e7ff",
+    avatarUrl: avatar("m-chen", "dbeafe"),
   },
   {
     id: "case-manager-3",
@@ -39,8 +41,7 @@ export const APP_USERS: AppUser[] = [
     subtitle: "case manager",
     reviewerName: "J. Williams",
     reviewerTitle: "case manager",
-    avatarUrl:
-      "https://api.dicebear.com/9.x/fun-emoji/svg?seed=williams-bear&backgroundColor=ffedd5",
+    avatarUrl: avatar("j-williams", "d1fae5"),
   },
   {
     id: "supervisor",
@@ -48,8 +49,7 @@ export const APP_USERS: AppUser[] = [
     subtitle: "supervisor",
     reviewerName: "F. Smith",
     reviewerTitle: "supervisor",
-    avatarUrl:
-      "https://api.dicebear.com/9.x/fun-emoji/svg?seed=smith-owl&backgroundColor=f3e8ff",
+    avatarUrl: avatar("f-smith", "ede9fe"),
   },
 ];
 

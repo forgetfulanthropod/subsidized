@@ -1,3 +1,5 @@
+import type { StallReasonId } from "@/lib/stall-reasons";
+
 export type CaseManagerId =
   | "case-manager-1"
   | "case-manager-2"
@@ -66,6 +68,8 @@ export interface Applicant {
     | "Stalled"
     | "Rejected";
   documentsRequestedAt?: string;
+  stallReason?: StallReasonId;
+  requiredDocuments?: readonly string[];
   responseStatus: "NoResponse" | "Contacted" | "Scheduled" | "Declined";
   assignedVacancyId?: string;
   inReviewBy?: {

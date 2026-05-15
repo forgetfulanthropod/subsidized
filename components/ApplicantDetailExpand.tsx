@@ -2,9 +2,18 @@
 
 import Link from "next/link";
 import { RequestDocumentsButton } from "@/components/RequestDocumentsButton";
+import { RequiredDocumentsAlert } from "@/components/RequiredDocumentsAlert";
 import { StatusFlowButtons } from "@/components/StatusFlowButtons";
-import { getMatchingVacancies } from "@/lib/matching";
-import { formatDate, formatStatus, formatSubsidyType } from "@/lib/utils";
+import {
+  getMatchingVacancies,
+  getTopMatchingVacancies,
+} from "@/lib/matching";
+import { MAX_MATCHING_VACANCIES } from "@/lib/stall-reasons";
+import {
+  formatStallReason,
+  getRequiredDocuments,
+} from "@/lib/stall-reasons";
+import { formatStatus, formatSubsidyType } from "@/lib/utils";
 import type { Applicant, Vacancy } from "@/types";
 
 interface ApplicantDetailExpandProps {
@@ -16,11 +25,29 @@ export function ApplicantDetailExpand({
   applicant,
   vacancies,
 }: ApplicantDetailExpandProps) {
-  const matches = getMatchingVacancies(applicant, vacancies);
+  const allMatches = getMatchingVacancies(applicant, vacancies);
+  const matches = getTopMatchingVacancies(applicant, vacancies);
   const vacancyId = matches[0]?.id ?? applicant.assignedVacancyId;
+  const requiredDocs =
+    applicant.requiredDocuments ??
+    getRequiredDocuments(applicant.stallReason);
 
   return (
     <div className="space-y-4 bg-slate-50 px-4 py-4">
+      {applicant.status === "Stalled" && applicant.stallReason && (
+        <p className="text-sm text-amber-900">
+          <span className="font-medium">Stall reason:</span>{" "}
+          {formatStallReason(applicant.stallReason)}
+        </p>
+      )}
+
+      {applicant.status === "Stalled" && requiredDocs.length > 0 && (
+        <RequiredDocumentsAlert
+          documents={requiredDocs}
+          documentsRequestedAt={applicant.documentsRequestedAt}
+        />
+      )}
+
       <div className="grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
         <p>
           <span className="font-medium text-slate-600">Email:</span>{" "}
@@ -55,7 +82,9 @@ export function ApplicantDetailExpand({
       {matches.length > 0 && (
         <div>
           <p className="mb-1 text-sm font-medium text-slate-700">
-            Matching units ({matches.length})
+            Matching units ({matches.length}
+            {allMatches.length > matches.length ? ` of ${allMatches.length}` : ""}
+            )
           </p>
           <ul className="flex flex-wrap gap-2">
             {matches.map((v) => (
@@ -67,6 +96,11 @@ export function ApplicantDetailExpand({
               </li>
             ))}
           </ul>
+          {allMatches.length > MAX_MATCHING_VACANCIES && (
+            <p className="mt-1 text-xs text-slate-500">
+              Top {MAX_MATCHING_VACANCIES} shown
+            </p>
+          )}
         </div>
       )}
 

@@ -6,9 +6,25 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { RequiredDocumentsAlert } from "@/components/RequiredDocumentsAlert";
+import { RequestDocumentsButton } from "@/components/RequestDocumentsButton";
 import { StatusFlowButtons } from "@/components/StatusFlowButtons";
-import { getMatchingVacancies } from "@/lib/matching";
-import { formatCurrency, formatDate, formatStatus, formatSubsidyType } from "@/lib/utils";
+import {
+  getMatchingVacancies,
+  getTopMatchingVacancies,
+} from "@/lib/matching";
+import {
+  MAX_MATCHING_VACANCIES,
+  formatStallReason,
+  getRequiredDocuments,
+} from "@/lib/stall-reasons";
+import {
+  formatCurrency,
+  formatDate,
+  formatStatus,
+  formatSubsidyType,
+  statusBadgeVariant,
+} from "@/lib/utils";
 import type { Applicant, Vacancy } from "@/types";
 
 export default function ApplicationDetailPage() {
@@ -51,8 +67,12 @@ export default function ApplicationDetailPage() {
     );
   }
 
-  const matches = getMatchingVacancies(applicant, vacancies);
+  const allMatches = getMatchingVacancies(applicant, vacancies);
+  const matches = getTopMatchingVacancies(applicant, vacancies);
   const vacancyId = matches[0]?.id ?? applicant.assignedVacancyId;
+  const requiredDocs =
+    applicant.requiredDocuments ??
+    getRequiredDocuments(applicant.stallReason);
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6">
@@ -69,10 +89,27 @@ export default function ApplicationDetailPage() {
                 Applied {formatDate(applicant.applicationDate)}
               </p>
             </div>
-            <Badge>{applicant.status}</Badge>
+            <Badge variant={statusBadgeVariant(applicant.status)}>
+              {formatStatus(applicant.status)}
+            </Badge>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {applicant.status === "Stalled" && applicant.stallReason && (
+            <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-950">
+              <span className="font-semibold">Stall reason:</span>{" "}
+              {formatStallReason(applicant.stallReason)}
+            </p>
+          )}
+
+          {(applicant.status === "Stalled" || applicant.documentsRequestedAt) &&
+            requiredDocs.length > 0 && (
+              <RequiredDocumentsAlert
+                documents={requiredDocs}
+                documentsRequestedAt={applicant.documentsRequestedAt}
+              />
+            )}
+
           <div className="grid gap-4 sm:grid-cols-2 text-sm">
             <p>
               <span className="font-medium">Email:</span> {applicant.email}
@@ -115,30 +152,46 @@ export default function ApplicationDetailPage() {
 
           <div>
             <h3 className="mb-2 font-medium">Case actions</h3>
-            <StatusFlowButtons applicant={applicant} vacancyId={vacancyId} />
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusFlowButtons applicant={applicant} vacancyId={vacancyId} />
+              {applicant.status === "Stalled" && (
+                <RequestDocumentsButton applicantId={applicant.id} />
+              )}
+            </div>
           </div>
 
           <div>
             <h3 className="mb-2 font-medium">
-              Matching vacancies ({matches.length})
+              Matching vacancies ({matches.length}
+              {allMatches.length > matches.length
+                ? ` of ${allMatches.length}`
+                : ""}
+              )
             </h3>
             {matches.length === 0 ? (
               <p className="text-sm text-slate-500">No compatible units.</p>
             ) : (
-              <ul className="space-y-2">
-                {matches.map((v) => (
-                  <li
-                    key={v.id}
-                    className="rounded-md border border-slate-100 p-3 text-sm"
-                  >
-                    <p className="font-medium">{v.address}</p>
-                    <p className="text-slate-500">
-                      {v.city} · {formatSubsidyType(v.subsidyType)} ·{" "}
-                      {formatStatus(v.status)}
-                    </p>
-                  </li>
-                ))}
-              </ul>
+              <>
+                <ul className="space-y-2">
+                  {matches.map((v) => (
+                    <li
+                      key={v.id}
+                      className="rounded-md border border-slate-100 p-3 text-sm"
+                    >
+                      <p className="font-medium">{v.address}</p>
+                      <p className="text-slate-500">
+                        {v.city} · {formatSubsidyType(v.subsidyType)} ·{" "}
+                        {formatStatus(v.status)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+                {allMatches.length > MAX_MATCHING_VACANCIES && (
+                  <p className="mt-2 text-xs text-slate-500">
+                    Showing top {MAX_MATCHING_VACANCIES} matches by city fit.
+                  </p>
+                )}
+              </>
             )}
           </div>
 

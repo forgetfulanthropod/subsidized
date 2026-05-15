@@ -1,6 +1,10 @@
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { v4 as uuid } from "uuid";
+import {
+  getRequiredDocuments,
+  pickStallReason,
+} from "../lib/stall-reasons";
 import type {
   Applicant,
   ApplicantMessage,
@@ -475,12 +479,18 @@ function generateCompletedCases(
       });
 
       if (status === "Stalled") {
+        const stallReason = pickStallReason(i + j);
+        applicant.stallReason = stallReason;
+        applicant.requiredDocuments = [...getRequiredDocuments(stallReason)];
+        if (j % 3 !== 2) {
+          applicant.documentsRequestedAt = randomDate(8 + (j % 12));
+        }
         applicant.moveInDate = randomDate(45 + (i % 30));
         applicant.notes = [
           {
             id: uuid(),
             date: randomDate(20),
-            text: "Case stalled — income docs and voucher packet outstanding.",
+            text: `Case stalled — ${stallReason === "missingDocumentation" ? "income docs and voucher packet outstanding" : "follow-up required on outstanding items"}.`,
             author: "Case Manager",
           },
         ];
@@ -580,6 +590,11 @@ function markEscalatedCases(applicants: Applicant[]) {
       applicant.assignedCaseManagerId ?? CASE_MANAGERS[i % CASE_MANAGERS.length];
     applicant.escalatedBy = escalatedBy;
     applicant.escalatedAt = randomDate(3 + (i % 14));
+    if (!applicant.stallReason && applicant.status === "Stalled") {
+      const stallReason = pickStallReason(i + 500);
+      applicant.stallReason = stallReason;
+      applicant.requiredDocuments = [...getRequiredDocuments(stallReason)];
+    }
   });
 }
 

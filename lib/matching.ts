@@ -1,4 +1,5 @@
 import type { Applicant, Vacancy } from "@/types";
+import { MAX_MATCHING_VACANCIES } from "@/lib/stall-reasons";
 
 export function getMatchingVacancies(
   applicant: Applicant,
@@ -18,6 +19,14 @@ export function getMatchingVacancies(
 
     return accessibilityMatch && petMatch && cityMatch;
   });
+}
+
+export function getTopMatchingVacancies(
+  applicant: Applicant,
+  vacancies: Vacancy[],
+  limit = MAX_MATCHING_VACANCIES
+) {
+  return getMatchingVacancies(applicant, vacancies).slice(0, limit);
 }
 
 export function getMatchingApplicants(

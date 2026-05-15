@@ -1,18 +1,21 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, BarChart3 } from "lucide-react";
+import { EscalatedCasePanel } from "@/components/EscalatedCasePanel";
 import { useUser } from "@/context/UserContext";
 import { getSupervisorDashboard } from "@/lib/supervisor-dashboard";
 import { getCaseManagerById, isSupervisor } from "@/lib/users";
 import { formatDate, formatStatus } from "@/lib/utils";
+import { getMostCommonStallReason, formatStallReason } from "@/lib/stall-reasons";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 import type { Applicant } from "@/types";
 
 export function SupervisorDashboard() {
   const { user } = useUser();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const { data: applicants = [], isLoading } = useQuery<Applicant[]>({
     queryKey: ["applicants"],
@@ -31,6 +34,9 @@ export function SupervisorDashboard() {
   }
 
   const { escalated, kpis } = getSupervisorDashboard(applicants);
+  const activeId = selectedId ?? escalated[0]?.id ?? null;
+  const selected = escalated.find((a) => a.id === activeId);
+  const topStall = getMostCommonStallReason(applicants);
 
   return (
     <section className="mb-8 space-y-6">
@@ -41,6 +47,15 @@ export function SupervisorDashboard() {
         <p className="text-sm text-slate-600">
           Escalations and caseload health across your team
         </p>
+        {topStall.total > 0 && (
+          <p className="mt-2 text-sm text-slate-600">
+            Top stall reason in caseload:{" "}
+            <span className="font-medium text-amber-900">
+              {formatStallReason(topStall.id)}
+            </span>{" "}
+            ({topStall.pct}% of {topStall.total} stalled cases)
+          </p>
+        )}
       </div>
 
       {escalated.length > 0 && (
@@ -48,34 +63,50 @@ export function SupervisorDashboard() {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base text-amber-900">
               <AlertTriangle className="h-4 w-4" />
-              Escalated cases ({escalated.length})
+              Manage escalated cases ({escalated.length})
             </CardTitle>
+            <p className="text-sm text-amber-800/90">
+              Select a case to review documents, reassign, or clear escalation
+              without leaving this dashboard.
+            </p>
           </CardHeader>
-          <CardContent className="max-h-64 space-y-2 overflow-y-auto">
-            {escalated.map((a) => {
-              const sender = getCaseManagerById(a.escalatedBy);
-              return (
-                <Link
-                  key={a.id}
-                  href={`/applications/${a.id}`}
-                  className="flex items-center justify-between rounded-md border border-amber-100 bg-white px-3 py-2 text-sm transition-colors hover:border-amber-200"
-                >
-                  <div>
-                    <p className="font-medium text-slate-900">{a.fullName}</p>
-                    <p className="text-xs text-slate-500">
-                      {formatStatus(a.status)} · escalated{" "}
-                      {a.escalatedAt ? formatDate(a.escalatedAt) : ""}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-xs font-medium text-amber-800">
-                      From {sender?.displayName ?? "Unknown"}
-                    </p>
-                    <p className="text-xs text-slate-500">{sender?.subtitle}</p>
-                  </div>
-                </Link>
-              );
-            })}
+          <CardContent>
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,280px)_1fr]">
+              <ul className="max-h-80 space-y-1 overflow-y-auto rounded-md border border-amber-100 bg-white p-1">
+                {escalated.map((a) => {
+                  const sender = getCaseManagerById(a.escalatedBy);
+                  const isActive = a.id === activeId;
+                  return (
+                    <li key={a.id}>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedId(a.id)}
+                        className={cn(
+                          "w-full rounded-md px-3 py-2 text-left text-sm transition-colors",
+                          isActive
+                            ? "bg-amber-100 ring-1 ring-amber-300"
+                            : "hover:bg-amber-50"
+                        )}
+                      >
+                        <p className="font-medium text-slate-900">{a.fullName}</p>
+                        <p className="text-xs text-slate-500">
+                          {formatStatus(a.status)} · from{" "}
+                          {sender?.displayName ?? "Unknown"}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {a.escalatedAt ? formatDate(a.escalatedAt) : ""}
+                        </p>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              {selected ? (
+                <EscalatedCasePanel applicant={selected} />
+              ) : (
+                <p className="text-sm text-slate-500">Select an escalated case.</p>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}

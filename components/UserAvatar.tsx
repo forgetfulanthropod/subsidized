@@ -19,7 +19,10 @@ export function UserAvatar({
       width={size}
       height={size}
       unoptimized
-      className={cn("rounded-full border border-slate-200 bg-white", className)}
+      className={cn(
+        "shrink-0 rounded-full border border-slate-200 bg-slate-100 object-cover",
+        className
+      )}
     />
   );
 }

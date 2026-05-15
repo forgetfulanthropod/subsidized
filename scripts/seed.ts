@@ -235,8 +235,7 @@ function dateDaysFromNow(days: number) {
 function personName(i: number) {
   const first = firstNames[i % firstNames.length];
   const last = lastNames[(i * 7 + 3) % lastNames.length];
-  const seq = Math.floor(i / (firstNames.length * lastNames.length));
-  return seq > 0 ? `${first} ${last} ${seq + 1}` : `${first} ${last}`;
+  return `${first} ${last}`;
 }
 
 function generateProperties(): Property[] {

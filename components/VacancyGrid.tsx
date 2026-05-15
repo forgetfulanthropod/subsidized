@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ClaimControl } from "@/components/ClaimControl";
 import { CityModal } from "@/components/CityModal";
 import { getMatchingApplicants } from "@/lib/matching";
 import {
@@ -318,6 +319,17 @@ function PropertySection({
                   </Badge>
                 </div>
                 <p className="text-xs text-slate-500">{vacancy.address}</p>
+                <div
+                  className="pt-1"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
+                >
+                  <ClaimControl
+                    type="vacancy"
+                    id={vacancy.id}
+                    assignedCaseManagerId={vacancy.assignedCaseManagerId}
+                  />
+                </div>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <p className="flex items-center gap-1.5">

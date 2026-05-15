@@ -78,5 +78,7 @@ export async function getNotificationLog() {
 
 export async function getTenants() {
   const applicants = await getApplicants();
-  return applicants.filter((a) => a.status === "TenancyConfirmed");
+  return applicants.filter(
+    (a) => a.status === "TenancyConfirmed" || a.status === "MovedIn"
+  );
 }

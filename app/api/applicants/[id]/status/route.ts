@@ -64,7 +64,7 @@ export async function PATCH(
       applicant.responseStatus = "Scheduled";
       break;
     case "confirm":
-      applicant.status = "TenancyConfirmed";
+      applicant.status = "MovedIn";
       applicant.responseStatus = "Contacted";
       if (applicant.assignedVacancyId) {
         const { getVacancies, saveVacancies } = await import("@/lib/data");

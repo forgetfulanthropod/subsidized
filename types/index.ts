@@ -1,3 +1,8 @@
+export type CaseManagerId =
+  | "case-manager-1"
+  | "case-manager-2"
+  | "case-manager-3";
+
 export interface Property {
   id: string;
   name: string;
@@ -24,13 +29,9 @@ export interface Vacancy {
   petPolicy: string;
   availableDate: string;
   status: "Vacant" | "UnderReview" | "Leased";
+  assignedCaseManagerId?: CaseManagerId;
   images?: string[];
 }
-
-export type CaseManagerId =
-  | "case-manager-1"
-  | "case-manager-2"
-  | "case-manager-3";
 
 export interface ApplicantMessage {
   id: string;
@@ -61,7 +62,10 @@ export interface Applicant {
     | "Notified"
     | "MoveInScheduled"
     | "TenancyConfirmed"
+    | "MovedIn"
+    | "Stalled"
     | "Rejected";
+  documentsRequestedAt?: string;
   responseStatus: "NoResponse" | "Contacted" | "Scheduled" | "Declined";
   assignedVacancyId?: string;
   inReviewBy?: {
@@ -69,6 +73,8 @@ export interface Applicant {
     title: string;
   };
   assignedCaseManagerId?: CaseManagerId;
+  escalatedAt?: string;
+  escalatedBy?: CaseManagerId;
   lastInteractionDate?: string;
   moveInDate?: string;
   messages?: ApplicantMessage[];

@@ -43,10 +43,10 @@ export function CaseManagerDashboard() {
     <section className="mb-8 space-y-4">
       <div>
         <h2 className="text-lg font-semibold text-slate-900">
-          {user.label} — caseload overview
+          {user.displayName} — caseload overview
         </h2>
         <p className="text-sm text-slate-600">
-          Your active tenants and priorities for {user.reviewerName}
+          Your active tenants and priorities · {user.subtitle}
         </p>
       </div>
 
@@ -70,7 +70,7 @@ export function CaseManagerDashboard() {
             />
           ))}
           {dashboard.tenantsInReview.length > 5 && (
-            <FooterLink href="/tenants" label="View all tenants" />
+            <FooterLink href="/cases/completed" label="View completed cases" />
           )}
         </DashboardCard>
 

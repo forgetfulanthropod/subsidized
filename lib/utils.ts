@@ -22,7 +22,14 @@ export function formatCurrency(amount: number) {
 }
 
 /** "MoveInScheduled" → "move in scheduled" */
+const STATUS_LABELS: Record<string, string> = {
+  MovedIn: "moved in",
+  Stalled: "stalled",
+  TenancyConfirmed: "tenancy confirmed",
+};
+
 export function formatStatus(status: string) {
+  if (STATUS_LABELS[status]) return STATUS_LABELS[status];
   return status
     .replace(/([A-Z])/g, " $1")
     .trim()

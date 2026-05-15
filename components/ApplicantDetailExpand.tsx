@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { RequestDocumentsButton } from "@/components/RequestDocumentsButton";
 import { StatusFlowButtons } from "@/components/StatusFlowButtons";
 import { getMatchingVacancies } from "@/lib/matching";
 import { formatDate, formatStatus, formatSubsidyType } from "@/lib/utils";
@@ -70,11 +71,16 @@ export function ApplicantDetailExpand({
       )}
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-3">
-        <StatusFlowButtons
-          applicant={applicant}
-          vacancyId={vacancyId}
-          menuOnly
-        />
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusFlowButtons
+            applicant={applicant}
+            vacancyId={vacancyId}
+            menuOnly
+          />
+          {applicant.status === "Stalled" && (
+            <RequestDocumentsButton applicantId={applicant.id} />
+          )}
+        </div>
         <Link
           href={`/applications/${applicant.id}`}
           className="text-sm font-medium text-emerald-700 hover:underline"

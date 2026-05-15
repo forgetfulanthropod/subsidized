@@ -10,6 +10,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import type { Applicant, CityInfo, Vacancy } from "@/types";
 import { formatDate, formatStatus, formatSubsidyType } from "@/lib/utils";
+import { ClaimControl } from "@/components/ClaimControl";
 import { StatusFlowButtons } from "@/components/StatusFlowButtons";
 
 interface CityModalProps {
@@ -52,6 +53,14 @@ export function CityModal({
             <p>
               <span className="font-medium">Status:</span>{" "}
               <Badge variant="secondary">{formatStatus(vacancy.status)}</Badge>
+            </p>
+            <p>
+              <span className="font-medium">Case manager:</span>{" "}
+              <ClaimControl
+                type="vacancy"
+                id={vacancy.id}
+                assignedCaseManagerId={vacancy.assignedCaseManagerId}
+              />
             </p>
             <div className="flex flex-wrap gap-1">
               {vacancy.accessibility.wheelchair && (

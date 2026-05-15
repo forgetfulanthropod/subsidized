@@ -23,7 +23,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ApplicantDetailExpand } from "@/components/ApplicantDetailExpand";
+import { ClaimControl } from "@/components/ClaimControl";
+import { RequestDocumentsButton } from "@/components/RequestDocumentsButton";
 import { useUser } from "@/context/UserContext";
+import { isCaseManager } from "@/lib/users";
 import { getMatchingVacancies } from "@/lib/matching";
 import {
   formatDate,
@@ -44,11 +47,36 @@ const APPLICANT_STATUS_OPTIONS = [
   "Rejected",
 ] as const;
 
+const IN_PROGRESS_STATUSES: Applicant["status"][] = [
+  "Pending",
+  "Eligible",
+  "Notified",
+  "MoveInScheduled",
+];
+
+const COMPLETED_STATUSES: Applicant["status"][] = [
+  "MovedIn",
+  "Stalled",
+  "TenancyConfirmed",
+  "Ineligible",
+  "Rejected",
+];
+
 interface ApplicantTableProps {
   tenantsOnly?: boolean;
+  casesMode?: "in-progress" | "completed";
+  managerCaseloadOnly?: boolean;
+  showReview?: boolean;
+  showAssignee?: boolean;
 }
 
-export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
+export function ApplicantTable({
+  tenantsOnly = false,
+  casesMode,
+  managerCaseloadOnly = false,
+  showReview = false,
+  showAssignee = false,
+}: ApplicantTableProps) {
   const { user } = useUser();
   const [cityFilter, setCityFilter] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -91,10 +119,20 @@ export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
   const filtered = useMemo(() => {
     let list = [...applicants];
 
-    if (tenantsOnly) {
-      list = list.filter((a) => a.status === "TenancyConfirmed");
+    if (casesMode === "in-progress") {
+      list = list.filter((a) => IN_PROGRESS_STATUSES.includes(a.status));
+    } else if (casesMode === "completed") {
+      list = list.filter((a) => COMPLETED_STATUSES.includes(a.status));
+    } else if (tenantsOnly) {
+      list = list.filter(
+        (a) => a.status === "TenancyConfirmed" || a.status === "MovedIn"
+      );
     } else {
       list = list.filter((a) => a.status !== "TenancyConfirmed");
+    }
+
+    if (managerCaseloadOnly && isCaseManager(user.id)) {
+      list = list.filter((a) => a.assignedCaseManagerId === user.id);
     }
 
     list.sort(
@@ -133,6 +171,9 @@ export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
   }, [
     applicants,
     tenantsOnly,
+    casesMode,
+    managerCaseloadOnly,
+    user.id,
     cityFilter,
     statusFilter,
     metroFilter,
@@ -145,10 +186,12 @@ export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
     switch (status) {
       case "Eligible":
       case "TenancyConfirmed":
+      case "MovedIn":
         return "default" as const;
       case "Pending":
       case "Notified":
       case "MoveInScheduled":
+      case "Stalled":
         return "warning" as const;
       case "Ineligible":
       case "Rejected":
@@ -183,14 +226,32 @@ export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
           </Link>
         ),
       }),
-      ...(tenantsOnly
+      ...(showAssignee
+        ? [
+            columnHelper.display({
+              id: "assignee",
+              header: "Case manager",
+              cell: ({ row }) => (
+                <ClaimControl
+                  type="applicant"
+                  id={row.original.id}
+                  assignedCaseManagerId={row.original.assignedCaseManagerId}
+                />
+              ),
+            }),
+          ]
+        : []),
+      ...(tenantsOnly || showReview
         ? [
             columnHelper.display({
               id: "review",
               header: "Review",
               cell: ({ row }) => (
                 <span className="text-sm text-slate-600">
-                  {getReviewLabel(row.original)}
+                  {row.original.status === "TenancyConfirmed" ||
+                  row.original.status === "MovedIn"
+                    ? getReviewLabel(row.original)
+                    : "—"}
                 </span>
               ),
             }),
@@ -207,30 +268,42 @@ export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
       }),
       columnHelper.accessor("status", {
         header: "Status",
-        cell: (info) => (
-          <Badge variant={statusVariant(info.getValue())}>
-            {formatStatus(info.getValue())}
-          </Badge>
-        ),
-      }),
-      columnHelper.display({
-        id: "matches",
-        header: "Matches",
-        cell: ({ row }) => {
-          const matches = getMatchingVacancies(row.original, vacancies);
+        cell: (info) => {
+          const applicant = info.row.original;
           return (
-            <span className="text-sm">
-              {matches.length > 0 ? (
-                <span className="font-medium text-emerald-700">
-                  {matches.length} unit{matches.length !== 1 ? "s" : ""}
-                </span>
-              ) : (
-                <span className="text-slate-400">None</span>
+            <div className="flex flex-col items-start gap-1.5">
+              <Badge variant={statusVariant(info.getValue())}>
+                {formatStatus(info.getValue())}
+              </Badge>
+              {casesMode === "completed" && applicant.status === "Stalled" && (
+                <RequestDocumentsButton applicantId={applicant.id} />
               )}
-            </span>
+            </div>
           );
         },
       }),
+      ...(casesMode !== "completed"
+        ? [
+            columnHelper.display({
+              id: "matches",
+              header: "Matches",
+              cell: ({ row }) => {
+                const matches = getMatchingVacancies(row.original, vacancies);
+                return (
+                  <span className="text-sm">
+                    {matches.length > 0 ? (
+                      <span className="font-medium text-emerald-700">
+                        {matches.length} unit{matches.length !== 1 ? "s" : ""}
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">None</span>
+                    )}
+                  </span>
+                );
+              },
+            }),
+          ]
+        : []),
       columnHelper.display({
         id: "expand",
         header: "",
@@ -254,7 +327,7 @@ export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
         },
       }),
     ],
-    [vacancies, expandedId, tenantsOnly, user]
+    [vacancies, expandedId, tenantsOnly, showReview, showAssignee, casesMode, user]
   );
 
   const table = useReactTable({
@@ -282,9 +355,11 @@ export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              {(tenantsOnly
-                ? (["TenancyConfirmed"] as const)
-                : APPLICANT_STATUS_OPTIONS
+              {(casesMode === "completed" || tenantsOnly
+                ? COMPLETED_STATUSES
+                : casesMode === "in-progress"
+                  ? IN_PROGRESS_STATUSES
+                  : APPLICANT_STATUS_OPTIONS
               ).map((s) => (
                 <SelectItem key={s} value={s}>
                   {formatStatus(s)}

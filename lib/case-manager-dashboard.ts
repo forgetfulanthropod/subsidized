@@ -7,7 +7,7 @@ export function isAssignedToManager(applicant: Applicant, managerId: UserRole) {
 }
 
 export function isTenantInReview(applicant: Applicant) {
-  if (applicant.status === "TenancyConfirmed") {
+  if (applicant.status === "TenancyConfirmed" || applicant.status === "MovedIn") {
     return applicant.inReviewBy?.title === "case manager";
   }
   return ["Eligible", "Notified", "MoveInScheduled"].includes(applicant.status);

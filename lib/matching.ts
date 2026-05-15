@@ -28,7 +28,8 @@ export function getMatchingApplicants(
     if (
       a.status === "Ineligible" ||
       a.status === "Rejected" ||
-      a.status === "TenancyConfirmed"
+      a.status === "TenancyConfirmed" ||
+      a.status === "MovedIn"
     ) {
       return false;
     }

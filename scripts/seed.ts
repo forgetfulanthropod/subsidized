@@ -12,6 +12,16 @@ import type {
 
 const DATA_DIR = path.join(process.cwd(), "data");
 
+const SCALE = {
+  vacancies: 100,
+  activeApplicants: 280,
+  tenants: 5000,
+  stalled: 120,
+  ineligible: 40,
+  rejected: 40,
+  properties: 20,
+};
+
 const cities: CityInfo[] = [
   {
     city: "Los Angeles",
@@ -56,241 +66,48 @@ const cities: CityInfo[] = [
   },
 ];
 
-const properties: Property[] = [
-  {
-    id: "prop-la-101",
-    name: "Wilshire Gardens",
-    address: "1245 Wilshire Blvd",
-    city: "Los Angeles",
-    metroArea: "Los Angeles Metro",
-    totalUnits: 86,
-  },
-  {
-    id: "prop-la-102",
-    name: "Sunset Terrace",
-    address: "892 Sunset Blvd",
-    city: "Los Angeles",
-    metroArea: "Los Angeles Metro",
-    totalUnits: 64,
-  },
-  {
-    id: "prop-pas-201",
-    name: "Colorado Court",
-    address: "456 Colorado Blvd",
-    city: "Pasadena",
-    metroArea: "Los Angeles Metro",
-    totalUnits: 52,
-  },
-  {
-    id: "prop-oak-301",
-    name: "Broadway Commons",
-    address: "2100 Broadway",
-    city: "Oakland",
-    metroArea: "Bay Area",
-    totalUnits: 72,
-  },
-  {
-    id: "prop-oak-302",
-    name: "Telegraph Place",
-    address: "789 Telegraph Ave",
-    city: "Oakland",
-    metroArea: "Bay Area",
-    totalUnits: 48,
-  },
-  {
-    id: "prop-sj-401",
-    name: "Alameda Heights",
-    address: "1500 The Alameda",
-    city: "San Jose",
-    metroArea: "Bay Area",
-    totalUnits: 96,
-  },
-  {
-    id: "prop-ber-501",
-    name: "Shattuck Residences",
-    address: "2200 Shattuck Ave",
-    city: "Berkeley",
-    metroArea: "Bay Area",
-    totalUnits: 40,
-  },
-  {
-    id: "prop-la-103",
-    name: "Pico Park",
-    address: "3300 Pico Blvd",
-    city: "Los Angeles",
-    metroArea: "Los Angeles Metro",
-    totalUnits: 58,
-  },
-  {
-    id: "prop-pas-202",
-    name: "Lake Avenue Homes",
-    address: "100 S Lake Ave",
-    city: "Pasadena",
-    metroArea: "Los Angeles Metro",
-    totalUnits: 44,
-  },
-  {
-    id: "prop-sj-402",
-    name: "Santa Clara Square",
-    address: "500 E Santa Clara St",
-    city: "San Jose",
-    metroArea: "Bay Area",
-    totalUnits: 80,
-  },
+const PROPERTY_NAMES = [
+  "Wilshire Gardens",
+  "Sunset Terrace",
+  "Colorado Court",
+  "Broadway Commons",
+  "Telegraph Place",
+  "Alameda Heights",
+  "Shattuck Residences",
+  "Pico Park",
+  "Lake Avenue Homes",
+  "Santa Clara Square",
+  "Mission Creek",
+  "Harbor View",
+  "Cedar Heights",
+  "Valley Oaks",
+  "Metro Plaza",
+  "Bayview Terrace",
+  "Golden Gate Arms",
+  "Redwood Court",
+  "Civic Center Lofts",
+  "Parkside Village",
 ];
 
-const vacancies: Vacancy[] = [
-  {
-    id: "vac-001",
-    propertyId: "prop-la-101",
-    address: "1245 Wilshire Blvd, Unit 4B",
-    city: "Los Angeles",
-    metroArea: "Los Angeles Metro",
-    unitType: "2BR/1BA",
-    rent: 1850,
-    subsidyType: "Section8",
-    accessibility: { wheelchair: true, hearingVisual: false },
-    petFriendly: true,
-    petPolicy: "Cats and small dogs under 25 lbs",
-    availableDate: "2026-06-01",
-    status: "Vacant",
-  },
-  {
-    id: "vac-002",
-    propertyId: "prop-la-102",
-    address: "892 Sunset Blvd, Unit 12",
-    city: "Los Angeles",
-    metroArea: "Los Angeles Metro",
-    unitType: "1BR/1BA",
-    rent: 1420,
-    subsidyType: "LIHTC",
-    accessibility: { wheelchair: false, hearingVisual: true },
-    petFriendly: false,
-    petPolicy: "No pets",
-    availableDate: "2026-05-20",
-    status: "Vacant",
-  },
-  {
-    id: "vac-003",
-    propertyId: "prop-pas-201",
-    address: "456 Colorado Blvd, Unit 2A",
-    city: "Pasadena",
-    metroArea: "Los Angeles Metro",
-    unitType: "3BR/2BA",
-    rent: 2200,
-    subsidyType: "Section8",
-    accessibility: { wheelchair: true, hearingVisual: true },
-    petFriendly: true,
-    petPolicy: "Two pets max, breed restrictions apply",
-    availableDate: "2026-07-01",
-    status: "Vacant",
-  },
-  {
-    id: "vac-004",
-    propertyId: "prop-oak-301",
-    address: "2100 Broadway, Unit 5",
-    city: "Oakland",
-    metroArea: "Bay Area",
-    unitType: "2BR/1BA",
-    rent: 1950,
-    subsidyType: "LIHTC",
-    accessibility: { wheelchair: true, hearingVisual: false },
-    petFriendly: true,
-    petPolicy: "Cats only",
-    availableDate: "2026-06-15",
-    status: "Vacant",
-  },
-  {
-    id: "vac-005",
-    propertyId: "prop-oak-302",
-    address: "789 Telegraph Ave, Unit 1",
-    city: "Oakland",
-    metroArea: "Bay Area",
-    unitType: "1BR/1BA",
-    rent: 1680,
-    subsidyType: "Section8",
-    accessibility: { wheelchair: false, hearingVisual: false },
-    petFriendly: false,
-    petPolicy: "No pets",
-    availableDate: "2026-05-01",
-    status: "UnderReview",
-  },
-  {
-    id: "vac-006",
-    propertyId: "prop-sj-401",
-    address: "1500 The Alameda, Unit 8C",
-    city: "San Jose",
-    metroArea: "Bay Area",
-    unitType: "2BR/2BA",
-    rent: 2100,
-    subsidyType: "LIHTC",
-    accessibility: { wheelchair: true, hearingVisual: true },
-    petFriendly: true,
-    petPolicy: "Dogs and cats welcome",
-    availableDate: "2026-08-01",
-    status: "Vacant",
-  },
-  {
-    id: "vac-007",
-    propertyId: "prop-ber-501",
-    address: "2200 Shattuck Ave, Unit 3",
-    city: "Berkeley",
-    metroArea: "Bay Area",
-    unitType: "1BR/1BA",
-    rent: 1750,
-    subsidyType: "Section8",
-    accessibility: { wheelchair: false, hearingVisual: true },
-    petFriendly: true,
-    petPolicy: "One pet under 40 lbs",
-    availableDate: "2026-06-01",
-    status: "Vacant",
-  },
-  {
-    id: "vac-008",
-    propertyId: "prop-la-103",
-    address: "3300 Pico Blvd, Unit 6",
-    city: "Los Angeles",
-    metroArea: "Los Angeles Metro",
-    unitType: "2BR/1BA",
-    rent: 1780,
-    subsidyType: "LIHTC",
-    accessibility: { wheelchair: false, hearingVisual: false },
-    petFriendly: true,
-    petPolicy: "Cats only, no dogs",
-    availableDate: "2026-05-15",
-    status: "Leased",
-  },
-  {
-    id: "vac-009",
-    propertyId: "prop-pas-202",
-    address: "100 S Lake Ave, Unit 10",
-    city: "Pasadena",
-    metroArea: "Los Angeles Metro",
-    unitType: "1BR/1BA",
-    rent: 1550,
-    subsidyType: "Section8",
-    accessibility: { wheelchair: true, hearingVisual: false },
-    petFriendly: false,
-    petPolicy: "No pets",
-    availableDate: "2026-06-20",
-    status: "Vacant",
-  },
-  {
-    id: "vac-010",
-    propertyId: "prop-sj-402",
-    address: "500 E Santa Clara St, Unit 2B",
-    city: "San Jose",
-    metroArea: "Bay Area",
-    unitType: "3BR/2BA",
-    rent: 2450,
-    subsidyType: "Section8",
-    accessibility: { wheelchair: true, hearingVisual: false },
-    petFriendly: true,
-    petPolicy: "Two pets max",
-    availableDate: "2026-07-15",
-    status: "Vacant",
-  },
+const STREET_NAMES = [
+  "Wilshire Blvd",
+  "Sunset Blvd",
+  "Colorado Blvd",
+  "Broadway",
+  "Telegraph Ave",
+  "The Alameda",
+  "Shattuck Ave",
+  "Pico Blvd",
+  "Lake Ave",
+  "Santa Clara St",
+  "Mission St",
+  "Market St",
+  "University Ave",
+  "Main St",
+  "Oak St",
 ];
+
+const UNIT_TYPES = ["1BR/1BA", "2BR/1BA", "2BR/2BA", "3BR/2BA", "Studio"];
 
 const firstNames = [
   "Maria",
@@ -318,6 +135,11 @@ const firstNames = [
   "Nina",
   "Christopher",
   "Rosa",
+  "Wei",
+  "Olivia",
+  "Noah",
+  "Emma",
+  "Liam",
 ];
 
 const lastNames = [
@@ -341,19 +163,56 @@ const lastNames = [
   "White",
   "Harris",
   "Clark",
+  "Lewis",
+  "Walker",
+  "Hall",
+  "Allen",
+  "Young",
+  "King",
+  "Wright",
+  "Scott",
+  "Green",
+  "Baker",
 ];
 
-const statuses: Applicant["status"][] = [
+const ACTIVE_STATUSES: Applicant["status"][] = [
   "Pending",
   "Pending",
   "Eligible",
   "Eligible",
   "Notified",
   "MoveInScheduled",
-  "TenancyConfirmed",
   "Ineligible",
   "Rejected",
   "Pending",
+];
+
+const CASE_MANAGERS: CaseManagerId[] = [
+  "case-manager-1",
+  "case-manager-2",
+  "case-manager-3",
+];
+
+const CM_PROFILES: Array<{ id: CaseManagerId; name: string }> = [
+  { id: "case-manager-1", name: "A. Rodriguez" },
+  { id: "case-manager-2", name: "M. Chen" },
+  { id: "case-manager-3", name: "J. Williams" },
+];
+
+const MESSAGE_SUBJECTS = [
+  "Documentation follow-up",
+  "Lease signing question",
+  "Income verification",
+  "Unit walkthrough request",
+  "Voucher update",
+];
+
+const PET_POLICIES = [
+  "No pets",
+  "Cats only",
+  "Cats and small dogs under 25 lbs",
+  "Two pets max",
+  "One pet under 40 lbs",
 ];
 
 function randomDate(daysAgo: number) {
@@ -369,19 +228,66 @@ function dateDaysFromNow(days: number) {
   return d.toISOString();
 }
 
-const CASE_MANAGERS: CaseManagerId[] = [
-  "case-manager-1",
-  "case-manager-2",
-  "case-manager-3",
-];
+function personName(i: number) {
+  const first = firstNames[i % firstNames.length];
+  const last = lastNames[(i * 7 + 3) % lastNames.length];
+  const seq = Math.floor(i / (firstNames.length * lastNames.length));
+  return seq > 0 ? `${first} ${last} ${seq + 1}` : `${first} ${last}`;
+}
 
-const MESSAGE_SUBJECTS = [
-  "Documentation follow-up",
-  "Lease signing question",
-  "Income verification",
-  "Unit walkthrough request",
-  "Voucher update",
-];
+function generateProperties(): Property[] {
+  const properties: Property[] = [];
+  for (let i = 0; i < SCALE.properties; i++) {
+    const cityInfo = cities[i % cities.length];
+    const street = STREET_NAMES[i % STREET_NAMES.length];
+    const number = 100 + i * 47;
+    properties.push({
+      id: `prop-${String(i + 1).padStart(3, "0")}`,
+      name: PROPERTY_NAMES[i % PROPERTY_NAMES.length],
+      address: `${number} ${street}`,
+      city: cityInfo.city,
+      metroArea: cityInfo.metroArea,
+      totalUnits: 48 + (i % 8) * 12,
+    });
+  }
+  return properties;
+}
+
+function generateVacancies(properties: Property[]): Vacancy[] {
+  const vacancies: Vacancy[] = [];
+  for (let i = 0; i < SCALE.vacancies; i++) {
+    const property = properties[i % properties.length];
+    const unitNum = (i % 24) + 1;
+    const floor = Math.floor(unitNum / 8) + 1;
+    const statusRoll = i % 20;
+    const status: Vacancy["status"] =
+      statusRoll < 16 ? "Vacant" : statusRoll < 18 ? "UnderReview" : "Leased";
+
+    vacancies.push({
+      id: `vac-${String(i + 1).padStart(4, "0")}`,
+      propertyId: property.id,
+      address: `${property.address}, Unit ${floor}${String.fromCharCode(65 + (unitNum % 8))}`,
+      city: property.city,
+      metroArea: property.metroArea,
+      unitType: UNIT_TYPES[i % UNIT_TYPES.length],
+      rent: 1200 + (i % 12) * 150,
+      subsidyType: i % 2 === 0 ? "Section8" : "LIHTC",
+      accessibility: {
+        wheelchair: i % 5 === 0,
+        hearingVisual: i % 7 === 0,
+      },
+      petFriendly: i % 3 !== 0,
+      petPolicy: PET_POLICIES[i % PET_POLICIES.length],
+      availableDate: dateDaysFromNow((i % 60) + 1).slice(0, 10),
+      status,
+      assignedCaseManagerId:
+        status !== "Leased" && i % 3 !== 0
+          ? CASE_MANAGERS[i % CASE_MANAGERS.length]
+          : undefined,
+    });
+  }
+  return vacancies;
+}
 
 function buildMessages(
   fullName: string,
@@ -398,117 +304,296 @@ function buildMessages(
       preview: "Hi, I wanted to follow up on my application status…",
       read: !unread,
     },
-    ...(i % 12 === 0
-      ? [
-          {
-            id: uuid(),
-            date: randomDate(1),
-            from: fullName,
-            subject: "Urgent: move-in date",
-            preview: "Can we confirm the move-in window for this week?",
-            read: false,
-          },
-        ]
-      : []),
   ];
 }
 
-function generateApplicants(): Applicant[] {
+function buildApplicantBase(
+  i: number,
+  vacancies: Vacancy[],
+  options: {
+    status: Applicant["status"];
+    applicationDaysAgo: number;
+    interactionDaysAgo: number;
+    includeMessages?: boolean;
+    emailSuffix?: string;
+    unclaimed?: boolean;
+  }
+): Applicant {
+  const fullName = personName(i);
+  const [first, ...rest] = fullName.split(" ");
+  const last = rest.join(" ") || "Resident";
+  const cityInfo = cities[i % cities.length];
   const cityPool = cities.map((c) => c.city);
-  const applicants: Applicant[] = [];
+  const preferredCities = [
+    cityInfo.city,
+    cityPool[(i + 1) % cityPool.length],
+  ].filter((c, idx, arr) => arr.indexOf(c) === idx);
 
-  for (let i = 0; i < 28; i++) {
-    const first = firstNames[i % firstNames.length];
-    const last = lastNames[i % lastNames.length];
-    const numCities = 1 + (i % 3);
-    const preferredCities: string[] = [];
-    for (let j = 0; j < numCities; j++) {
-      const c = cityPool[(i + j) % cityPool.length];
-      if (!preferredCities.includes(c)) preferredCities.push(c);
+  const hasWheelchair = i % 7 === 0;
+  const hasHearing = i % 9 === 0;
+  const accessibilityNeeds: string[] = [];
+  if (hasWheelchair) accessibilityNeeds.push("wheelchair");
+  if (hasHearing) accessibilityNeeds.push("hearing");
+
+  const hasPets = i % 4 === 0;
+  const status = options.status;
+  const needsReview = ["Eligible", "Notified", "MoveInScheduled", "MovedIn", "Stalled"].includes(
+    status
+  );
+  const assignedCaseManagerId = options.unclaimed
+    ? undefined
+    : CASE_MANAGERS[i % CASE_MANAGERS.length];
+  const cmProfile = assignedCaseManagerId
+    ? CM_PROFILES.find((p) => p.id === assignedCaseManagerId)
+    : undefined;
+
+  return {
+    id: uuid(),
+    applicationDate: randomDate(options.applicationDaysAgo),
+    fullName,
+    assignedCaseManagerId,
+    lastInteractionDate: randomDate(options.interactionDaysAgo),
+    messages: options.includeMessages ? buildMessages(fullName, i) : undefined,
+    email: `${first.toLowerCase().replace(/\s/g, "")}.${last.toLowerCase().replace(/\s/g, "")}${options.emailSuffix ?? ""}@email.com`,
+    phone: `(${310 + (i % 90)}) 555-${String(1000 + (i % 9000)).slice(-4)}`,
+    householdSize: 1 + (i % 5),
+    income: 20000 + (i % 10) * 6000,
+    voucherType: i % 3 === 0 ? "Other" : "Section8",
+    accessibilityNeeds,
+    hasPets,
+    petTypes: hasPets ? (i % 2 === 0 ? ["cat"] : ["dog"]) : undefined,
+    preferredCities,
+    status,
+    inReviewBy:
+      needsReview && cmProfile
+        ? { name: cmProfile.name, title: "case manager" }
+        : undefined,
+    responseStatus:
+      status === "Notified"
+        ? "NoResponse"
+        : status === "MoveInScheduled"
+          ? "Scheduled"
+          : status === "MovedIn"
+            ? "Contacted"
+            : "NoResponse",
+    assignedVacancyId:
+      status === "MoveInScheduled" ||
+      status === "MovedIn" ||
+      status === "Stalled"
+        ? vacancies[i % vacancies.length].id
+        : undefined,
+    notes: [],
+  };
+}
+
+function generateActiveApplicants(vacancies: Vacancy[]): Applicant[] {
+  const applicants: Applicant[] = [];
+  for (let i = 0; i < SCALE.activeApplicants; i++) {
+    const status = ACTIVE_STATUSES[i % ACTIVE_STATUSES.length];
+    const applicant = buildApplicantBase(i, vacancies, {
+      status,
+      applicationDaysAgo: 90,
+      interactionDaysAgo: 3 + ((i * 7) % 40),
+      includeMessages: true,
+      unclaimed: i % 4 === 0,
+    });
+
+    if (status === "MoveInScheduled") {
+      applicant.moveInDate =
+        i % 5 === 0
+          ? dateDaysFromNow(i % 4)
+          : dateDaysFromNow(10 + (i % 14));
     }
 
-    const hasWheelchair = i % 7 === 0;
-    const hasHearing = i % 9 === 0;
-    const accessibilityNeeds: string[] = [];
-    if (hasWheelchair) accessibilityNeeds.push("wheelchair");
-    if (hasHearing) accessibilityNeeds.push("hearing");
+    if (i % 5 === 0) {
+      applicant.notes = [
+        {
+          id: uuid(),
+          date: randomDate(30),
+          text: "Initial screening completed. Awaiting documentation.",
+          author: "Case Manager",
+        },
+      ];
+    }
 
-    const hasPets = i % 4 === 0;
-    const status = statuses[i % statuses.length];
-    const inReviewBy =
-      status === "TenancyConfirmed"
-        ? i % 3 === 0
-          ? { name: "F. Smith", title: "supervisor" }
-          : { name: "A. Rodriguez", title: "case manager" }
-        : ["Eligible", "Notified", "MoveInScheduled"].includes(status)
-          ? { name: "A. Rodriguez", title: "case manager" }
-          : undefined;
+    applicants.push(applicant);
+  }
+  return applicants;
+}
 
-    const assignedCaseManagerId = CASE_MANAGERS[i % 3];
-    const fullName = `${first} ${last}`;
-    const interactionDaysAgo = 3 + ((i * 7) % 40);
-    const moveInDate =
-      status === "MoveInScheduled" || status === "TenancyConfirmed"
-        ? i % 5 === 0
-          ? dateDaysFromNow(i % 4)
-          : dateDaysFromNow(10 + (i % 14))
-        : undefined;
-
-    applicants.push({
-      id: uuid(),
-      applicationDate: randomDate(90),
-      fullName,
-      assignedCaseManagerId,
-      lastInteractionDate: randomDate(interactionDaysAgo),
-      moveInDate,
-      messages: buildMessages(fullName, i),
-      email: `${first.toLowerCase()}.${last.toLowerCase()}@email.com`,
-      phone: `(${310 + (i % 90)}) 555-${String(1000 + i).slice(-4)}`,
-      householdSize: 1 + (i % 5),
-      income: 22000 + (i % 8) * 8000,
-      voucherType: i % 3 === 0 ? "Other" : "Section8",
-      accessibilityNeeds,
-      hasPets,
-      petTypes: hasPets ? (i % 2 === 0 ? ["cat"] : ["dog"]) : undefined,
-      preferredCities,
-      status,
-      inReviewBy,
-      responseStatus:
-        status === "Notified"
-          ? "NoResponse"
-          : status === "MoveInScheduled"
-            ? "Scheduled"
-            : status === "TenancyConfirmed"
-              ? "Contacted"
-              : "NoResponse",
-      assignedVacancyId:
-        status === "TenancyConfirmed" || status === "MoveInScheduled"
-          ? vacancies[i % vacancies.length].id
-          : undefined,
-      notes:
-        i % 5 === 0
-          ? [
-              {
-                id: uuid(),
-                date: randomDate(30),
-                text: "Initial screening completed. Awaiting documentation.",
-                author: "Case Manager",
-              },
-            ]
-          : [],
+function generateTenants(vacancies: Vacancy[], startIndex: number): Applicant[] {
+  const tenants: Applicant[] = [];
+  for (let i = 0; i < SCALE.tenants; i++) {
+    const idx = startIndex + i;
+    const applicant = buildApplicantBase(idx, vacancies, {
+      status: "MovedIn",
+      applicationDaysAgo: 200 + (i % 400),
+      interactionDaysAgo: 5 + (i % 90),
+      emailSuffix: ".tenant",
     });
+    applicant.moveInDate = randomDate(30 + (i % 800));
+    const cm = CM_PROFILES.find((p) => p.id === applicant.assignedCaseManagerId);
+    applicant.inReviewBy = {
+      name: cm?.name ?? "A. Rodriguez",
+      title: "case manager",
+    };
+    if (i % 20 === 0) {
+      applicant.notes = [
+        {
+          id: uuid(),
+          date: randomDate(40),
+          text: "Move-in completed. Final inspection passed.",
+          author: "Case Manager",
+        },
+      ];
+    }
+    tenants.push(applicant);
+  }
+  return tenants;
+}
+
+function generateCompletedCases(
+  vacancies: Vacancy[],
+  startIndex: number
+): Applicant[] {
+  const completed: Applicant[] = [];
+  const segments: Array<{ count: number; status: Applicant["status"] }> = [
+    { count: SCALE.stalled, status: "Stalled" },
+    { count: SCALE.ineligible, status: "Ineligible" },
+    { count: SCALE.rejected, status: "Rejected" },
+  ];
+
+  let offset = 0;
+  for (const { count, status } of segments) {
+    for (let j = 0; j < count; j++) {
+      const i = startIndex + offset + j;
+      const applicant = buildApplicantBase(i, vacancies, {
+        status,
+        applicationDaysAgo: 180 + (i % 90),
+        interactionDaysAgo: status === "Stalled" ? 35 + (i % 25) : 20 + (i % 15),
+        emailSuffix: ".closed",
+      });
+
+      if (status === "Stalled") {
+        applicant.moveInDate = randomDate(45 + (i % 30));
+        applicant.notes = [
+          {
+            id: uuid(),
+            date: randomDate(20),
+            text: "Case stalled — income docs and voucher packet outstanding.",
+            author: "Case Manager",
+          },
+        ];
+        if (j % 2 === 0) {
+          applicant.messages = [
+            {
+              id: uuid(),
+              date: randomDate(12),
+              from: applicant.fullName,
+              subject: "Missing paperwork",
+              preview: "Still gathering documents from my employer…",
+              read: true,
+            },
+          ];
+        }
+      }
+
+      completed.push(applicant);
+    }
+    offset += count;
   }
 
-  return applicants.sort(
+  return completed;
+}
+
+function isThisWeek(iso: string) {
+  const date = new Date(iso);
+  const now = new Date();
+  const start = new Date(now);
+  start.setDate(now.getDate() - now.getDay());
+  start.setHours(0, 0, 0, 0);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 7);
+  return date >= start && date < end;
+}
+
+function ensureMoveInsThisWeek(applicants: Applicant[], vacancies: Vacancy[]) {
+  CASE_MANAGERS.forEach((cmId, cmIndex) => {
+    const moveInsThisWeek = applicants.filter(
+      (a) =>
+        a.assignedCaseManagerId === cmId &&
+        a.moveInDate &&
+        isThisWeek(a.moveInDate)
+    );
+
+    const needed = Math.max(0, 1 - moveInsThisWeek.length);
+    if (needed === 0) return;
+
+    const pool = applicants.filter(
+      (a) =>
+        a.assignedCaseManagerId === cmId &&
+        ["MoveInScheduled", "Notified", "Eligible", "Pending"].includes(a.status)
+    );
+
+    for (let n = 0; n < needed && n < pool.length; n++) {
+      const target = pool[n];
+      target.status = "MoveInScheduled";
+      target.moveInDate = dateDaysFromNow(1 + cmIndex + n);
+      target.responseStatus = "Scheduled";
+      const cm = CM_PROFILES.find((p) => p.id === cmId);
+      target.inReviewBy = {
+        name: cm?.name ?? "A. Rodriguez",
+        title: "case manager",
+      };
+      target.assignedVacancyId =
+        target.assignedVacancyId ?? vacancies[(cmIndex + n) % vacancies.length].id;
+    }
+  });
+}
+
+function generateApplicants(vacancies: Vacancy[]): Applicant[] {
+  const active = generateActiveApplicants(vacancies);
+  const tenants = generateTenants(vacancies, SCALE.activeApplicants);
+  const completed = generateCompletedCases(
+    vacancies,
+    SCALE.activeApplicants + SCALE.tenants
+  );
+
+  const all = [...active, ...tenants, ...completed].sort(
     (a, b) =>
       new Date(a.applicationDate).getTime() -
       new Date(b.applicationDate).getTime()
   );
+
+  ensureMoveInsThisWeek(all, vacancies);
+  markEscalatedCases(all);
+  return all;
+}
+
+function markEscalatedCases(applicants: Applicant[]) {
+  const candidates = applicants.filter((a) =>
+    ["Stalled", "MoveInScheduled", "Notified", "Eligible"].includes(a.status)
+  );
+
+  candidates.slice(0, 35).forEach((applicant, i) => {
+    const escalatedBy =
+      applicant.assignedCaseManagerId ?? CASE_MANAGERS[i % CASE_MANAGERS.length];
+    applicant.escalatedBy = escalatedBy;
+    applicant.escalatedAt = randomDate(3 + (i % 14));
+  });
 }
 
 async function seed() {
+  console.log("Generating seed data…");
+  const start = Date.now();
+
   await mkdir(DATA_DIR, { recursive: true });
-  const applicants = generateApplicants();
+
+  const properties = generateProperties();
+  const vacancies = generateVacancies(properties);
+  const applicants = generateApplicants(vacancies);
+
+  const tenantCount = applicants.filter((a) => a.status === "MovedIn").length;
 
   await writeFile(
     path.join(DATA_DIR, "vacancies.json"),
@@ -516,7 +601,7 @@ async function seed() {
   );
   await writeFile(
     path.join(DATA_DIR, "applicants.json"),
-    JSON.stringify(applicants, null, 2)
+    JSON.stringify(applicants)
   );
   await writeFile(
     path.join(DATA_DIR, "cities.json"),
@@ -535,8 +620,9 @@ async function seed() {
     JSON.stringify([], null, 2)
   );
 
+  const elapsed = ((Date.now() - start) / 1000).toFixed(1);
   console.log(
-    `Seeded ${properties.length} properties, ${vacancies.length} vacancies, ${applicants.length} applicants, ${cities.length} cities`
+    `Seeded ${properties.length} properties, ${vacancies.length} vacancies, ${applicants.length} applicants (${tenantCount} tenants / moved in), ${cities.length} cities in ${elapsed}s`
   );
 }
 

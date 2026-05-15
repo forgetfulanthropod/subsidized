@@ -2,11 +2,8 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import {
-  CalendarDays,
-  Clock,
-  Mail,
-} from "lucide-react";
+import { CalendarDays, Clock } from "lucide-react";
+import { DocumentUpdatesQueue } from "@/components/DocumentUpdatesQueue";
 import { InReviewQueue } from "@/components/InReviewQueue";
 import { useUser } from "@/context/UserContext";
 import {
@@ -77,21 +74,7 @@ export function CaseManagerDashboard() {
           ))}
         </DashboardCard>
 
-        <DashboardCard
-          title="New messages"
-          icon={Mail}
-          count={dashboard.newMessages.length}
-          empty="No unread messages."
-        >
-          {dashboard.newMessages.slice(0, 5).map(({ applicant, message }) => (
-            <ApplicantRow
-              key={message.id}
-              name={message.subject}
-              href={`/applications/${applicant.id}`}
-              meta={`${applicant.fullName} · ${formatDaysSince(message.date)}`}
-            />
-          ))}
-        </DashboardCard>
+        <DocumentUpdatesQueue tenants={dashboard.documentUpdates} />
 
         <DashboardCard
           title="Move-ins this week"

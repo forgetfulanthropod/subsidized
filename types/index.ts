@@ -44,6 +44,15 @@ export interface ApplicantMessage {
   read: boolean;
 }
 
+export type DocumentVerificationStatus = "verified" | "uncertain";
+
+export interface DocumentSubmission {
+  id: string;
+  label: string;
+  submittedAt: string;
+  verificationStatus: DocumentVerificationStatus;
+}
+
 export interface Applicant {
   id: string;
   applicationDate: string;
@@ -68,6 +77,8 @@ export interface Applicant {
     | "Stalled"
     | "Rejected";
   documentsRequestedAt?: string;
+  documentSubmissions?: DocumentSubmission[];
+  documentsApprovedAt?: string;
   stallReason?: StallReasonId;
   requiredDocuments?: readonly string[];
   responseStatus: "NoResponse" | "Contacted" | "Scheduled" | "Declined";

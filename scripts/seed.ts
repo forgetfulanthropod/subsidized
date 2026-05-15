@@ -16,6 +16,7 @@ import type {
   ApplicantMessage,
   CaseManagerId,
   CityInfo,
+  DocumentSubmission,
   Property,
   Vacancy,
 } from "../types";
@@ -585,7 +586,61 @@ function generateApplicants(vacancies: Vacancy[]): Applicant[] {
   markEscalatedCases(all);
   ensureApplicantsInReviewPerManager(all);
   capInReviewPerManager(all);
+  ensureDocumentUpdates(all);
   return all;
+}
+
+const DOCUMENT_LABELS = [
+  "Government-issued photo ID",
+  "Proof of income (pay stubs)",
+  "Voucher / HAP packet",
+  "Lease acknowledgment",
+  "Employer verification letter",
+];
+
+const DOCUMENT_UPDATES_PER_CM = 8;
+
+function buildDocumentSubmissions(seed: number): DocumentSubmission[] {
+  const count = 2 + (seed % 3);
+  return Array.from({ length: count }, (_, j) => ({
+    id: uuid(),
+    label: DOCUMENT_LABELS[(seed + j) % DOCUMENT_LABELS.length],
+    submittedAt: randomDate(2 + (j % 6)),
+    verificationStatus: (seed + j) % 4 === 0 ? "uncertain" : "verified",
+  }));
+}
+
+function ensureDocumentUpdates(applicants: Applicant[]) {
+  for (const cmId of CASE_MANAGERS) {
+    const pool = applicants
+      .filter(
+        (a) =>
+          a.assignedCaseManagerId === cmId &&
+          (a.status === "MovedIn" || a.status === "TenancyConfirmed")
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.lastInteractionDate ?? b.applicationDate).getTime() -
+          new Date(a.lastInteractionDate ?? a.applicationDate).getTime()
+      );
+
+    const step = Math.max(1, Math.floor(pool.length / DOCUMENT_UPDATES_PER_CM));
+
+    pool
+      .filter((_, i) => i % step === 0)
+      .slice(0, DOCUMENT_UPDATES_PER_CM)
+      .forEach((tenant, i) => {
+        tenant.documentSubmissions = buildDocumentSubmissions(i + step);
+        if (i % 3 === 0) {
+          tenant.status = "TenancyConfirmed";
+          const cm = CM_PROFILES.find((p) => p.id === cmId);
+          tenant.inReviewBy = {
+            name: cm?.name ?? "A. Rodriguez",
+            title: "case manager",
+          };
+        }
+      });
+  }
 }
 
 const MOVE_INS_THIS_WEEK_CAP = 11;

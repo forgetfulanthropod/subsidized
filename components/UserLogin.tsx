@@ -1,6 +1,7 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, LogOut } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import { useUser } from "@/context/UserContext";
 import { UserAvatar } from "@/components/UserAvatar";
 import { APP_USERS, type UserRole } from "@/lib/users";
@@ -9,11 +10,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 export function UserLogin() {
   const { user, setUserId } = useUser();
+  const { logout } = useAuth();
 
   return (
     <DropdownMenu>
@@ -60,6 +63,14 @@ export function UserLogin() {
             </span>
           </DropdownMenuItem>
         ))}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer gap-2 text-red-700 focus:bg-red-50 focus:text-red-800"
+          onSelect={logout}
+        >
+          <LogOut className="h-4 w-4" aria-hidden />
+          Log out
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

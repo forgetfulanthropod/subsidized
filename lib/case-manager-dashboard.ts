@@ -69,16 +69,13 @@ export function getCaseManagerDashboard(applicants: Applicant[], managerId: User
         new Date(b.lastInteractionDate!).getTime()
     );
 
-  const newMessages = mine.flatMap((applicant) =>
-    (applicant.messages ?? [])
-      .filter((m) => !m.read)
-      .map((message) => ({ applicant, message }))
-  );
-
-  newMessages.sort(
-    (a, b) =>
-      new Date(b.message.date).getTime() - new Date(a.message.date).getTime()
-  );
+  const documentUpdates = mine
+    .filter(hasPendingDocumentReview)
+    .sort((a, b) => {
+      const aDate = latestSubmissionDate(a) ?? a.applicationDate;
+      const bDate = latestSubmissionDate(b) ?? b.applicationDate;
+      return new Date(bDate).getTime() - new Date(aDate).getTime();
+    });
 
   const moveInsThisWeek = mine
     .filter((a) => a.moveInDate && isThisWeek(a.moveInDate))
@@ -90,7 +87,28 @@ export function getCaseManagerDashboard(applicants: Applicant[], managerId: User
   return {
     tenantsInReview,
     longestSinceInteraction,
-    newMessages,
+    documentUpdates,
     moveInsThisWeek,
   };
+}
+
+export function hasPendingDocumentReview(applicant: Applicant) {
+  if (!applicant.documentSubmissions?.length) return false;
+  if (applicant.documentsApprovedAt) return false;
+  return isTenantRecord(applicant);
+}
+
+export function latestSubmissionDate(applicant: Applicant) {
+  const dates = applicant.documentSubmissions?.map((d) => d.submittedAt) ?? [];
+  if (dates.length === 0) return undefined;
+  return dates.sort(
+    (a, b) => new Date(b).getTime() - new Date(a).getTime()
+  )[0];
+}
+
+export function canStartMoveInFromDocuments(applicant: Applicant) {
+  return (
+    Boolean(applicant.documentsApprovedAt) &&
+    ["TenancyConfirmed", "Notified", "Eligible"].includes(applicant.status)
+  );
 }

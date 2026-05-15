@@ -3,6 +3,8 @@ import type { Applicant } from "@/types";
 import type { UserRole } from "@/lib/users";
 
 export const IN_REVIEW_DISPLAY_LIMIT = 35;
+/** Minimum active applicants (Eligible / Notified / Move-in scheduled) per case manager queue. */
+export const MIN_APPLICANTS_IN_REVIEW = 12;
 export const MOVE_INS_THIS_WEEK_CAP = 11;
 export const MOVE_INS_SCROLL_THRESHOLD = 5;
 

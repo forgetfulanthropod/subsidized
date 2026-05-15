@@ -1,7 +1,12 @@
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { v4 as uuid } from "uuid";
-import { isInReview } from "../lib/case-manager-dashboard";
+import {
+  isApplicantRecord,
+  isInReview,
+  isTenantRecord,
+  MIN_APPLICANTS_IN_REVIEW,
+} from "../lib/case-manager-dashboard";
 import {
   getRequiredDocuments,
   pickStallReason,
@@ -578,6 +583,7 @@ function generateApplicants(vacancies: Vacancy[]): Applicant[] {
   ensureMoveInsThisWeek(all, vacancies);
   capMoveInsThisWeek(all);
   markEscalatedCases(all);
+  ensureApplicantsInReviewPerManager(all);
   capInReviewPerManager(all);
   return all;
 }
@@ -607,23 +613,67 @@ function capMoveInsThisWeek(applicants: Applicant[]) {
 const IN_REVIEW_CAP = 35;
 
 function capInReviewPerManager(applicants: Applicant[]) {
-  for (const cmId of CASE_MANAGERS) {
-    const queue = applicants
-      .filter(
-        (a) =>
-          a.assignedCaseManagerId === cmId &&
-          isInReview(a)
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.applicationDate).getTime() -
-          new Date(b.applicationDate).getTime()
-      );
+  const byDate = (a: Applicant, b: Applicant) =>
+    new Date(a.applicationDate).getTime() -
+    new Date(b.applicationDate).getTime();
 
-    queue.slice(IN_REVIEW_CAP).forEach((a, i) => {
+  for (const cmId of CASE_MANAGERS) {
+    const queue = applicants.filter(
+      (a) => a.assignedCaseManagerId === cmId && isInReview(a)
+    );
+
+    const applicantQueue = queue.filter(isApplicantRecord).sort(byDate);
+    const tenantQueue = queue.filter(isTenantRecord).sort(byDate);
+
+    const keepApplicants = applicantQueue.slice(0, MIN_APPLICANTS_IN_REVIEW);
+    const tenantSlots = Math.max(0, IN_REVIEW_CAP - keepApplicants.length);
+    const keepTenants = tenantQueue.slice(0, tenantSlots);
+    const keepIds = new Set(
+      [...keepApplicants, ...keepTenants].map((a) => a.id)
+    );
+
+    queue.forEach((a, i) => {
+      if (keepIds.has(a.id)) return;
       a.reviewedAt = randomDate(1 + (i % 30));
       delete a.inReviewBy;
     });
+  }
+}
+
+function ensureApplicantsInReviewPerManager(applicants: Applicant[]) {
+  for (const cmId of CASE_MANAGERS) {
+    const inReviewApplicants = applicants.filter(
+      (a) =>
+        a.assignedCaseManagerId === cmId &&
+        isApplicantRecord(a) &&
+        ["Eligible", "Notified", "MoveInScheduled"].includes(a.status)
+    );
+
+    const needed = Math.max(0, MIN_APPLICANTS_IN_REVIEW - inReviewApplicants.length);
+    if (needed === 0) continue;
+
+    const pool = applicants.filter(
+      (a) =>
+        a.assignedCaseManagerId === cmId &&
+        isApplicantRecord(a) &&
+        ["Pending", "Eligible", "Notified"].includes(a.status)
+    );
+
+    const statuses: Applicant["status"][] = [
+      "Eligible",
+      "Notified",
+      "MoveInScheduled",
+    ];
+
+    for (let n = 0; n < needed && n < pool.length; n++) {
+      const target = pool[n];
+      target.status = statuses[n % statuses.length];
+      const cm = CM_PROFILES.find((p) => p.id === cmId);
+      target.inReviewBy = {
+        name: cm?.name ?? "A. Rodriguez",
+        title: "case manager",
+      };
+    }
   }
 }
 

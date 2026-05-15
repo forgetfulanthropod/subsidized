@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import type { Applicant, CityInfo, Vacancy } from "@/types";
-import { formatCurrency, formatDate, formatStatus } from "@/lib/utils";
+import { formatDate, formatStatus, formatSubsidyType } from "@/lib/utils";
 import { StatusFlowButtons } from "@/components/StatusFlowButtons";
 
 interface CityModalProps {
@@ -42,10 +42,8 @@ export function CityModal({
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2 text-sm">
             <p>
-              <span className="font-medium">Rent:</span> {formatCurrency(vacancy.rent)}
-            </p>
-            <p>
-              <span className="font-medium">Subsidy:</span> {vacancy.subsidyType}
+              <span className="font-medium">Housing program:</span>{" "}
+              {formatSubsidyType(vacancy.subsidyType)}
             </p>
             <p>
               <span className="font-medium">Available:</span>{" "}

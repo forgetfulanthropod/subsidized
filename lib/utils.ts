@@ -29,6 +29,10 @@ export function formatStatus(status: string) {
     .toLowerCase();
 }
 
+export function formatSubsidyType(subsidyType: "Section8" | "LIHTC") {
+  return subsidyType === "Section8" ? "Section 8" : "Subsidized";
+}
+
 export function formatInReviewBy(name: string, title: string) {
   return `In review by ${name}, ${title}`;
 }

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusFlowButtons } from "@/components/StatusFlowButtons";
 import { getMatchingVacancies } from "@/lib/matching";
-import { formatCurrency, formatDate, formatStatus } from "@/lib/utils";
+import { formatCurrency, formatDate, formatStatus, formatSubsidyType } from "@/lib/utils";
 import type { Applicant, Vacancy } from "@/types";
 
 export default function ApplicationDetailPage() {
@@ -133,7 +133,7 @@ export default function ApplicationDetailPage() {
                   >
                     <p className="font-medium">{v.address}</p>
                     <p className="text-slate-500">
-                      {v.city} · {formatCurrency(v.rent)}/mo ·{" "}
+                      {v.city} · {formatSubsidyType(v.subsidyType)} ·{" "}
                       {formatStatus(v.status)}
                     </p>
                   </li>

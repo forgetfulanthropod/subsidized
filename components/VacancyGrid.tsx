@@ -21,7 +21,7 @@ import {
   getPropertyDisplayName,
   type PropertyWithStats,
 } from "@/lib/properties";
-import { formatCurrency, formatDate, formatStatus } from "@/lib/utils";
+import { formatDate, formatStatus, formatSubsidyType } from "@/lib/utils";
 import type { Applicant, CityInfo, Property, Vacancy } from "@/types";
 
 export function VacancyGrid() {
@@ -322,7 +322,7 @@ function PropertySection({
               <CardContent className="space-y-2 text-sm">
                 <p className="flex items-center gap-1.5">
                   <Building2 className="h-4 w-4 text-slate-400" />
-                  {formatCurrency(vacancy.rent)}/mo · {vacancy.subsidyType}
+                  {formatSubsidyType(vacancy.subsidyType)}
                 </p>
                 <p className="text-slate-600">
                   Available {formatDate(vacancy.availableDate)}

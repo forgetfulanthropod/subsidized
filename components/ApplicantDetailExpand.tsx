@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { StatusFlowButtons } from "@/components/StatusFlowButtons";
 import { getMatchingVacancies } from "@/lib/matching";
-import { formatCurrency, formatDate, formatStatus } from "@/lib/utils";
+import { formatDate, formatStatus, formatSubsidyType } from "@/lib/utils";
 import type { Applicant, Vacancy } from "@/types";
 
 interface ApplicantDetailExpandProps {
@@ -62,7 +62,7 @@ export function ApplicantDetailExpand({
                 key={v.id}
                 className="rounded-md border border-slate-200 bg-white px-2 py-1 text-xs"
               >
-                {v.address}, {v.city} · {formatCurrency(v.rent)}/mo
+                {v.address}, {v.city} · {formatSubsidyType(v.subsidyType)}
               </li>
             ))}
           </ul>

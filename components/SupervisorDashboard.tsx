@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AlertTriangle, BarChart3 } from "lucide-react";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { EscalatedCasePanel } from "@/components/EscalatedCasePanel";
 import { useUser } from "@/context/UserContext";
 import { getSupervisorDashboard } from "@/lib/supervisor-dashboard";
@@ -12,6 +13,9 @@ import { getMostCommonStallReason, formatStallReason } from "@/lib/stall-reasons
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import type { Applicant } from "@/types";
+
+const ESCALATED_COLLAPSED_KEY = "essex-haven-supervisor-escalated-collapsed";
+const METRICS_COLLAPSED_KEY = "essex-haven-supervisor-metrics-collapsed";
 
 export function SupervisorDashboard() {
   const { user } = useUser();
@@ -59,63 +63,71 @@ export function SupervisorDashboard() {
       </div>
 
       {escalated.length > 0 && (
-        <Card className="border-amber-200 bg-amber-50/50">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-base text-amber-900">
+        <CollapsibleSection
+          storageKey={ESCALATED_COLLAPSED_KEY}
+          className="rounded-lg border border-amber-200 bg-amber-50/50 p-4"
+          headerClassName="p-0 hover:bg-transparent"
+          title={
+            <span className="flex items-center gap-2 text-base font-semibold text-amber-900">
               <AlertTriangle className="h-4 w-4" />
               Manage escalated cases ({escalated.length})
-            </CardTitle>
-            <p className="text-sm text-amber-800/90">
+            </span>
+          }
+          description={
+            <span className="text-amber-800/90">
               Select a case to review documents, reassign, or clear escalation
               without leaving this dashboard.
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,280px)_1fr]">
-              <ul className="max-h-80 space-y-1 overflow-y-auto rounded-md border border-amber-100 bg-white p-1">
-                {escalated.map((a) => {
-                  const sender = getCaseManagerById(a.escalatedBy);
-                  const isActive = a.id === activeId;
-                  return (
-                    <li key={a.id}>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedId(a.id)}
-                        className={cn(
-                          "w-full rounded-md px-3 py-2 text-left text-sm transition-colors",
-                          isActive
-                            ? "bg-amber-100 ring-1 ring-amber-300"
-                            : "hover:bg-amber-50"
-                        )}
-                      >
-                        <p className="font-medium text-slate-900">{a.fullName}</p>
-                        <p className="text-xs text-slate-500">
-                          {formatStatus(a.status)} · from{" "}
-                          {sender?.displayName ?? "Unknown"}
-                        </p>
-                        <p className="text-xs text-slate-400">
-                          {a.escalatedAt ? formatDate(a.escalatedAt) : ""}
-                        </p>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
-              {selected ? (
-                <EscalatedCasePanel applicant={selected} />
-              ) : (
-                <p className="text-sm text-slate-500">Select an escalated case.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+            </span>
+          }
+        >
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,280px)_1fr]">
+            <ul className="max-h-80 space-y-1 overflow-y-auto rounded-md border border-amber-100 bg-white p-1">
+              {escalated.map((a) => {
+                const sender = getCaseManagerById(a.escalatedBy);
+                const isActive = a.id === activeId;
+                return (
+                  <li key={a.id}>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedId(a.id)}
+                      className={cn(
+                        "w-full rounded-md px-3 py-2 text-left text-sm transition-colors",
+                        isActive
+                          ? "bg-amber-100 ring-1 ring-amber-300"
+                          : "hover:bg-amber-50"
+                      )}
+                    >
+                      <p className="font-medium text-slate-900">{a.fullName}</p>
+                      <p className="text-xs text-slate-500">
+                        {formatStatus(a.status)} · from{" "}
+                        {sender?.displayName ?? "Unknown"}
+                      </p>
+                      <p className="text-xs text-slate-400">
+                        {a.escalatedAt ? formatDate(a.escalatedAt) : ""}
+                      </p>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            {selected ? (
+              <EscalatedCasePanel applicant={selected} />
+            ) : (
+              <p className="text-sm text-slate-500">Select an escalated case.</p>
+            )}
+          </div>
+        </CollapsibleSection>
       )}
 
-      <div>
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-800">
-          <BarChart3 className="h-4 w-4" />
-          Team metrics
-        </h3>
+      <CollapsibleSection
+        storageKey={METRICS_COLLAPSED_KEY}
+        title={
+          <span className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+            <BarChart3 className="h-4 w-4" />
+            Team metrics
+          </span>
+        }
+      >
         <div className="grid gap-3 sm:grid-cols-3">
           {kpis.map((kpi) => (
             <Card key={kpi.id}>
@@ -148,7 +160,7 @@ export function SupervisorDashboard() {
             </Card>
           ))}
         </div>
-      </div>
+      </CollapsibleSection>
     </section>
   );
 }

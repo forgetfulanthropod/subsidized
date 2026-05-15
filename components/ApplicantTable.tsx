@@ -1,0 +1,394 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import {
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  createColumnHelper,
+} from "@tanstack/react-table";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { StatusFlowButtons } from "@/components/StatusFlowButtons";
+import { getMatchingVacancies } from "@/lib/matching";
+import { formatDate, formatCurrency, formatStatus } from "@/lib/utils";
+import type { Applicant, Vacancy } from "@/types";
+
+const columnHelper = createColumnHelper<Applicant>();
+
+const APPLICANT_STATUS_OPTIONS = [
+  "Pending",
+  "Eligible",
+  "Ineligible",
+  "Notified",
+  "MoveInScheduled",
+  "Rejected",
+] as const;
+
+interface ApplicantTableProps {
+  tenantsOnly?: boolean;
+}
+
+export function ApplicantTable({ tenantsOnly = false }: ApplicantTableProps) {
+  const [cityFilter, setCityFilter] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [metroFilter, setMetroFilter] = useState<string>("all");
+  const [petsFilter, setPetsFilter] = useState<string>("all");
+  const [accessibilityFilter, setAccessibilityFilter] = useState(false);
+  const [cityInput, setCityInput] = useState("");
+
+  const { data: applicants = [], isLoading } = useQuery<Applicant[]>({
+    queryKey: ["applicants"],
+    queryFn: async () => {
+      const res = await fetch("/api/applicants");
+      if (!res.ok) throw new Error("Failed to fetch applicants");
+      return res.json();
+    },
+  });
+
+  const { data: vacancies = [] } = useQuery<Vacancy[]>({
+    queryKey: ["vacancies"],
+    queryFn: async () => {
+      const res = await fetch("/api/vacancies");
+      if (!res.ok) throw new Error("Failed to fetch vacancies");
+      return res.json();
+    },
+  });
+
+  const allCities = useMemo(() => {
+    const cities = new Set<string>();
+    applicants.forEach((a) => a.preferredCities.forEach((c) => cities.add(c)));
+    return Array.from(cities).sort();
+  }, [applicants]);
+
+  const allMetros = useMemo(() => {
+    const metros = new Set<string>();
+    vacancies.forEach((v) => metros.add(v.metroArea));
+    return Array.from(metros).sort();
+  }, [vacancies]);
+
+  const filtered = useMemo(() => {
+    let list = [...applicants];
+
+    if (tenantsOnly) {
+      list = list.filter((a) => a.status === "TenancyConfirmed");
+    } else {
+      list = list.filter((a) => a.status !== "TenancyConfirmed");
+    }
+
+    list.sort(
+      (a, b) =>
+        new Date(b.applicationDate).getTime() -
+        new Date(a.applicationDate).getTime()
+    );
+
+    if (cityFilter.length > 0) {
+      list = list.filter((a) =>
+        a.preferredCities.some((c) => cityFilter.includes(c))
+      );
+    }
+
+    if (statusFilter !== "all") {
+      list = list.filter((a) => a.status === statusFilter);
+    }
+
+    if (metroFilter !== "all") {
+      const metroCities = vacancies
+        .filter((v) => v.metroArea === metroFilter)
+        .map((v) => v.city);
+      list = list.filter((a) =>
+        a.preferredCities.some((c) => metroCities.includes(c))
+      );
+    }
+
+    if (petsFilter === "yes") list = list.filter((a) => a.hasPets);
+    if (petsFilter === "no") list = list.filter((a) => !a.hasPets);
+
+    if (accessibilityFilter) {
+      list = list.filter((a) => a.accessibilityNeeds.length > 0);
+    }
+
+    return list;
+  }, [
+    applicants,
+    tenantsOnly,
+    cityFilter,
+    statusFilter,
+    metroFilter,
+    petsFilter,
+    accessibilityFilter,
+    vacancies,
+  ]);
+
+  const statusVariant = (status: Applicant["status"]) => {
+    switch (status) {
+      case "Eligible":
+      case "TenancyConfirmed":
+        return "default" as const;
+      case "Pending":
+      case "Notified":
+      case "MoveInScheduled":
+        return "warning" as const;
+      case "Ineligible":
+      case "Rejected":
+        return "destructive" as const;
+      default:
+        return "secondary" as const;
+    }
+  };
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor("applicationDate", {
+        header: "Applied",
+        cell: (info) => formatDate(info.getValue()),
+      }),
+      columnHelper.accessor("fullName", {
+        header: "Name",
+        cell: (info) => (
+          <Link
+            href={`/applications/${info.row.original.id}`}
+            className="font-medium text-emerald-700 hover:underline"
+          >
+            {info.getValue()}
+          </Link>
+        ),
+      }),
+      columnHelper.accessor("preferredCities", {
+        header: "Cities",
+        cell: (info) => info.getValue().join(", "),
+      }),
+      columnHelper.accessor("householdSize", { header: "HH Size" }),
+      columnHelper.accessor("income", {
+        header: "Income",
+        cell: (info) => formatCurrency(info.getValue()),
+      }),
+      columnHelper.accessor("status", {
+        header: "Status",
+        cell: (info) => (
+          <Badge variant={statusVariant(info.getValue())}>
+            {formatStatus(info.getValue())}
+          </Badge>
+        ),
+      }),
+      columnHelper.display({
+        id: "matches",
+        header: "Matches",
+        cell: ({ row }) => {
+          const matches = getMatchingVacancies(row.original, vacancies);
+          return (
+            <span className="text-sm">
+              {matches.length > 0 ? (
+                <span className="font-medium text-emerald-700">
+                  {matches.length} unit{matches.length !== 1 ? "s" : ""}
+                </span>
+              ) : (
+                <span className="text-slate-400">None</span>
+              )}
+            </span>
+          );
+        },
+      }),
+      columnHelper.display({
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const matches = getMatchingVacancies(row.original, vacancies);
+          const vacancyId = matches[0]?.id ?? row.original.assignedVacancyId;
+          return (
+            <StatusFlowButtons applicant={row.original} vacancyId={vacancyId} />
+          );
+        },
+      }),
+    ],
+    [vacancies]
+  );
+
+  const table = useReactTable({
+    data: filtered,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  const addCity = () => {
+    const c = cityInput.trim();
+    if (c && !cityFilter.includes(c)) {
+      setCityFilter([...cityFilter, c]);
+      setCityInput("");
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-end gap-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <div className="space-y-1">
+          <Label>Status</Label>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {(tenantsOnly
+                ? (["TenancyConfirmed"] as const)
+                : APPLICANT_STATUS_OPTIONS
+              ).map((s) => (
+                <SelectItem key={s} value={s}>
+                  {formatStatus(s)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label>Metro Area</Label>
+          <Select value={metroFilter} onValueChange={setMetroFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="All metros" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {allMetros.map((m) => (
+                <SelectItem key={m} value={m}>
+                  {m}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label>Pets</Label>
+          <Select value={petsFilter} onValueChange={setPetsFilter}>
+            <SelectTrigger className="w-[120px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              <SelectItem value="yes">Has pets</SelectItem>
+              <SelectItem value="no">No pets</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <Checkbox
+            id="accessibility"
+            checked={accessibilityFilter}
+            onCheckedChange={(c) => setAccessibilityFilter(c === true)}
+          />
+          <Label htmlFor="accessibility">Accessibility needs</Label>
+        </div>
+        <div className="flex flex-1 flex-wrap items-end gap-2">
+          <div className="space-y-1">
+            <Label>City filter</Label>
+            <div className="flex gap-2">
+              <Select
+                value=""
+                onValueChange={(v) => {
+                  if (v && !cityFilter.includes(v)) {
+                    setCityFilter([...cityFilter, v]);
+                  }
+                }}
+              >
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Add city" />
+                </SelectTrigger>
+                <SelectContent>
+                  {allCities.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Input
+                placeholder="Or type city"
+                value={cityInput}
+                onChange={(e) => setCityInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addCity()}
+                className="w-[140px]"
+              />
+              <Button type="button" variant="outline" size="sm" onClick={addCity}>
+                Add
+              </Button>
+            </div>
+          </div>
+          {cityFilter.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {cityFilter.map((c) => (
+                <Badge
+                  key={c}
+                  variant="outline"
+                  className="cursor-pointer"
+                  onClick={() => setCityFilter(cityFilter.filter((x) => x !== c))}
+                >
+                  {c} ×
+                </Badge>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <p className="text-slate-500">Loading applicants…</p>
+      ) : (
+        <div className="overflow-x-auto rounded-lg border border-slate-200">
+          <table className="w-full text-sm">
+            <thead className="bg-slate-50">
+              {table.getHeaderGroups().map((hg) => (
+                <tr key={hg.id}>
+                  {hg.headers.map((h) => (
+                    <th
+                      key={h.id}
+                      className="px-4 py-3 text-left font-medium text-slate-600"
+                    >
+                      {flexRender(h.column.columnDef.header, h.getContext())}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={columns.length}
+                    className="px-4 py-8 text-center text-slate-500"
+                  >
+                    No applicants found.
+                  </td>
+                </tr>
+              ) : (
+                table.getRowModel().rows.map((row) => (
+                  <tr key={row.id} className="border-t border-slate-100 hover:bg-slate-50">
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="px-4 py-3">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="text-sm text-slate-500">
+        Showing {filtered.length} of {applicants.length} · sorted by application date
+        (newest first)
+      </p>
+    </div>
+  );
+}
